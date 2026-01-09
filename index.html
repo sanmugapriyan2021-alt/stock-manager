@@ -1,0 +1,1910 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Uthaya Hollow Blocks | Stock Manager</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Roboto:wght@400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --primary: #F39C12;
+      /* Safety Yellow */
+      --primary-dark: #D35400;
+      --dark: #2C3E50;
+      /* Dark Slate */
+      --darker: #1A252F;
+      /* Midnight */
+      --light: #ECF0F1;
+      --grey: #95A5A6;
+      --danger: #E74C3C;
+      --success: #27AE60;
+      --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: var(--light);
+      color: var(--dark);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* --- Header & Nav --- */
+    header {
+      background-color: var(--darker);
+      color: white;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 4px solid var(--primary);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .brand h1 {
+      font-family: 'Rajdhani', sans-serif;
+      margin: 0;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand p {
+      margin: 0;
+      font-size: 0.8rem;
+      color: var(--grey);
+    }
+
+    nav {
+      display: flex;
+      gap: 5px;
+    }
+
+    nav button {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--grey);
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      font-family: 'Rajdhani', sans-serif;
+      text-transform: uppercase;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    nav button:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+
+    nav button.active {
+      background: var(--primary);
+      color: var(--darker);
+      box-shadow: 0 0 10px rgba(243, 156, 18, 0.4);
+    }
+
+    /* --- Layout --- */
+    main {
+      flex: 1;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .section {
+      display: none;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    h2 {
+      border-left: 5px solid var(--primary);
+      padding-left: 10px;
+      color: var(--darker);
+      font-family: 'Rajdhani', sans-serif;
+    }
+
+    /* --- Components --- */
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      animation: fadeIn 0.2s;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 600px;
+      /* Wider modal */
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      position: relative;
+    }
+
+    .modal-checkbox-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    .modal-checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      border: 1px solid #eee;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .modal-checkbox-item:hover {
+      background: #f9f9f9;
+      border-color: #ddd;
+    }
+
+    /* Bulk Add Area */
+    .bulk-add-area {
+      grid-column: 1 / -1;
+      background: #F4F6F6;
+      border: 1px dashed #BDC3C7;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+
+    .bulk-add-area textarea {
+      width: 100%;
+      margin-top: 10px;
+      font-family: monospace;
+      padding: 8px;
+      border: 1px solid #ddd;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: var(--card-shadow);
+      border-top: 3px solid var(--grey);
+    }
+
+    .stat-card.highlight {
+      border-top-color: var(--primary);
+    }
+
+    .stat-card h3 {
+      margin: 0 0 10px;
+      font-size: 0.9rem;
+      color: var(--grey);
+      text-transform: uppercase;
+    }
+
+    /* Low Stock Alert Styles */
+    .alert-banner {
+      background: #FADBD8;
+      color: #721C24;
+      border: 1px solid #F5C6CB;
+      padding: 10px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      display: none;
+      /* Hidden by default */
+    }
+
+    .alert-banner h3 {
+      margin: 0 0 5px 0;
+      font-size: 1rem;
+    }
+
+    .alert-list {
+      margin: 0;
+      padding-left: 20px;
+      font-size: 0.9rem;
+    }
+
+    .stat-card .value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--darker);
+      font-family: 'Rajdhani', sans-serif;
+    }
+
+    /* Forms */
+    .card {
+      background: white;
+      padding: 25px;
+      border-radius: 8px;
+      box-shadow: var(--card-shadow);
+      margin-bottom: 20px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      align-items: end;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--dark);
+    }
+
+    input,
+    select,
+    textarea {
+      padding: 10px;
+      border: 2px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-family: 'Roboto', sans-serif;
+      transition: border-color 0.2s;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--primary);
+      outline: none;
+    }
+
+    button.btn-primary {
+      background-color: var(--dark);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-family: 'Rajdhani', sans-serif;
+      transition: background 0.2s;
+    }
+
+    button.btn-primary:hover {
+      background-color: var(--primary);
+      color: var(--darker);
+    }
+
+    /* Tables */
+    .table-container {
+      overflow-x: auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: var(--card-shadow);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+    }
+
+    th,
+    td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+
+    th {
+      background-color: var(--darker);
+      color: white;
+      font-weight: 500;
+      font-family: 'Rajdhani', sans-serif;
+      letter-spacing: 0.5px;
+    }
+
+    tr:hover {
+      background-color: #f9f9f9;
+    }
+
+    .badge {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-buy {
+      background: #E8F8F5;
+      color: var(--success);
+    }
+
+    .badge-sell {
+      background: #FDEDEC;
+      color: var(--danger);
+    }
+
+    /* Dealer List */
+    .dealer-list {
+      display: grid;
+      gap: 15px;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+
+    .dealer-card {
+      background: white;
+      border-left: 4px solid var(--primary);
+      padding: 15px;
+      border-radius: 4px;
+      box-shadow: var(--card-shadow);
+    }
+
+    .dealer-card h4 {
+      margin: 0 0 5px;
+      color: var(--darker);
+    }
+
+    .dealer-card p {
+      margin: 0;
+      color: var(--grey);
+      font-size: 0.9rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: var(--grey);
+      font-size: 0.8rem;
+      margin-top: auto;
+    }
+
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    .filters input {
+      padding: 8px;
+      width: 200px;
+    }
+
+    #newMaterialGroup {
+      display: none;
+      margin-top: 10px;
+      background: #FFF3CD;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #FFEEBA;
+    }
+
+    /* --- Input Groups (Inline Buttons) --- */
+    .input-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .input-group select {
+      flex: 1;
+      min-width: 0;
+      /* Fix flex issue */
+    }
+
+    .btn-inline-del {
+      min-width: 50px;
+      flex-shrink: 0;
+      padding: 0;
+      background: #fee;
+      border: 1px solid #fcc;
+      color: red;
+      border-radius: 4px;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+    }
+
+    .btn-inline-del:hover {
+      background: #fdd;
+    }
+
+    /* --- Data Management Section (Transparent) --- */
+    .data-management {
+      margin-top: 50px;
+      padding: 20px;
+      border-top: 2px dashed #ddd;
+      opacity: 0.4;
+      transition: opacity 0.3s;
+      font-family: 'Courier New', monospace;
+      /* Monospace for "technical" feel */
+    }
+
+    .data-management:hover {
+      opacity: 1;
+    }
+
+    .data-management h3 {
+      font-size: 1rem;
+      color: var(--grey);
+      text-transform: uppercase;
+      margin-bottom: 15px;
+    }
+
+    .dm-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 15px;
+    }
+
+    /* Toggle Switch for Type */
+    .type-toggle {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .type-option {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+      border: 2px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      color: #aaa;
+    }
+
+    .type-option.active.buy {
+      background-color: #E8F8F5;
+      border-color: var(--success);
+      color: var(--success);
+    }
+
+    .type-option.active.sell {
+      background-color: #FDEDEC;
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .dm-card {
+      background: #fdfdfd;
+      border: 1px solid #eee;
+      padding: 10px;
+      border-radius: 4px;
+    }
+
+    .dm-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: var(--dark);
+    }
+
+    .dm-sizes {
+      padding-left: 10px;
+      border-left: 2px solid #eee;
+      margin-top: 5px;
+    }
+
+    .dm-size-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      padding: 2px 0;
+      color: var(--grey);
+    }
+
+    .btn-icon {
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 1rem;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+
+    .btn-icon:hover {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+
+    /* Login System */
+    #login-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(44, 62, 80, 0.98);
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(5px);
+    }
+
+    .login-box {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      text-align: center;
+      border-top: 5px solid var(--primary);
+    }
+
+    .login-box h2 {
+      margin-top: 0;
+      color: var(--darker);
+      border: none;
+      padding: 0;
+      margin-bottom: 20px;
+    }
+
+    .login-input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+    }
+
+    .login-input:focus {
+      border-color: var(--primary);
+      outline: none;
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: background 0.3s;
+    }
+
+    .btn-login:hover {
+      background: var(--primary-dark);
+    }
+
+    .login-error {
+      color: var(--danger);
+      margin-top: 10px;
+      font-weight: bold;
+      display: none;
+    }
+
+    /* Role Based Hiding */
+    body.no-edit .btn-inline-del,
+    body.no-edit .btn-icon,
+    /* Hides edit/delete pencils */
+    body.no-edit button[title="Edit"],
+    body.no-edit button[title="Delete"] {
+      display: none !important;
+    }
+
+    /* Ensure Action Buttons in User Modal are VISIBLE to Master */
+    /* Master does NOT have .no-edit class, so this is fine. 
+       Issue might be specificity or btn-inline-del being used elsewhere. 
+       Let's ensure .btn-inline-del is visible by default. */
+
+    body.no-entry .nav-entry-btn {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="brand">
+      <h1>🏗️ Uthaya Hollow Blocks</h1>
+      <p>Inventory & Stock Manager</p>
+    </div>
+    <nav>
+      <button onclick="navigate('home')" id="nav-home" class="active">🏠 Home</button>
+      <button onclick="navigate('entry')" id="nav-entry">➕ Entry</button>
+      <button onclick="navigate('records')" id="nav-records">� Records</button>
+      <button onclick="navigate('dealers')" id="nav-dealers">🤝 Dealers</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- HOME / DASHBOARD -->
+    <section id="home" class="active section">
+      <h2>📊 Stock Dashboard</h2>
+
+      <div id="lowStockAlert" class="alert-banner">
+        <h3>⚠️ Low Stock Alert (Close to end)</h3>
+        <ul id="lowStockList" class="alert-list"></ul>
+      </div>
+
+      <div class="stat-container">
+        <div class="stat-card highlight">
+          <h3>📦 Material Stock In</h3>
+          <div class="value" id="stat-in">0</div>
+          <small>Raw Materials Received</small>
+        </div>
+        <div class="stat-card highlight">
+          <h3>🧱 Products Sold</h3>
+          <div class="value" id="stat-out">0</div>
+          <small>Finished Goods Dispatched</small>
+        </div>
+        <div class="stat-card">
+          <h3>📝 Total Records</h3>
+          <div class="value" id="stat-total">0</div>
+          <small>All Transactions</small>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🕒 Recent Activity</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Material</th>
+                <th>Qty</th>
+                <th>Trader</th>
+              </tr>
+            </thead>
+            <tbody id="recent-table-body">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ENTRY SECTION (Form Only) -->
+    <section id="entry" class="section">
+      <h2>➕ New Transaction</h2>
+      <div class="card">
+        <form id="tradeForm">
+          <!-- Transaction Type Toggle -->
+          <div class="type-toggle">
+            <div class="type-option" id="opt-buy" onclick="setTxType('buy')">🟢 Stock In (Buy)</div>
+            <div class="type-option active sell" id="opt-sell" onclick="setTxType('sell')">🔴 Stock Out (Sell)</div>
+          </div>
+          <input type="hidden" id="t-type" value="sell">
+          <input type="hidden" id="t-id"> <!-- For Editing -->
+
+          <div class="form-grid">
+            <!-- Date -->
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="t-date" required>
+            </div>
+
+            <!-- Trader -->
+            <div class="form-group">
+              <label>Buyer Name</label>
+              <input type="text" id="t-name" list="traderList" placeholder="Search or type name..." required
+                oninput="fillContact()">
+              <datalist id="traderList"></datalist>
+            </div>
+
+            <div class="form-group">
+              <label>Contact</label>
+              <input type="text" id="t-contact" placeholder="Phone Number">
+            </div>
+
+            <!-- Product -->
+            <div class="form-group">
+              <label>Product</label>
+              <div class="input-group">
+                <select id="t-product" required onchange="handleProductChange()">
+                  <option value="">Select Product...</option>
+                </select>
+                <button type="button" id="btn-del-prod" class="btn-inline-del" onclick="deleteCurrentProduct()"
+                  title="Delete this product">🗑️</button>
+              </div>
+            </div>
+
+            <!-- Size -->
+            <div class="form-group">
+              <label>Size</label>
+              <div class="input-group">
+                <select id="t-size" required onchange="handleSizeChange()">
+                  <option value="">Select Product First...</option>
+                </select>
+                <button type="button" id="btn-del-size" class="btn-inline-del" onclick="deleteCurrentSize()"
+                  title="Delete this size">🗑️</button>
+              </div>
+            </div>
+
+            <!-- Quantity -->
+            <div class="form-group">
+              <label>Quantity</label>
+              <input type="number" id="t-qty" placeholder="Units" required>
+            </div>
+          </div>
+
+          <!-- Dynamic Input for "New Product" -->
+          <div id="newProductGroup"
+            style="display:none; margin-top:10px; background:#e8f4fd; padding:10px; border-radius:4px;">
+            <label style="color:#2980b9;">✨ New Product Name:</label>
+            <input type="text" id="t-custom-product" placeholder="e.g. Paver Block">
+          </div>
+
+          <!-- Dynamic Input for "New Size" -->
+          <div id="newSizeGroup"
+            style="display:none; margin-top:10px; background:#e8f4fd; padding:10px; border-radius:4px;">
+            <label style="color:#2980b9;">📏 New Size:</label>
+            <input type="text" id="t-custom-size" placeholder="e.g. 10 x 10">
+          </div>
+
+          <div class="form-group" style="margin-top:15px;">
+            <label>Notes</label>
+            <textarea id="t-notes" rows="1" placeholder="Optional details..."></textarea>
+          </div>
+
+          <div style="margin-top: 20px; text-align: right; display:flex; justify-content:flex-end; gap:10px;">
+            <button type="button" id="btn-cancel"
+              style="display:none; background:#ccc; border:none; padding:12px 20px; border-radius:4px; cursor:pointer;"
+              onclick="cancelEdit()">❌ Cancel</button>
+            <button type="submit" class="btn-primary" id="btn-submit">📤 Record Sale</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- RECORDS SECTION (Table + Catalog) -->
+    <section id="records" class="section">
+      <h2>📋 Sales & Stock Records</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Buyer</th>
+              <th>Contact</th>
+              <th>Type</th>
+              <th>Product</th>
+              <th>Size</th>
+              <th>Qty</th>
+              <th>Notes</th>
+              <th>Action</th>
+            </tr>
+            <!-- Filter Row -->
+            <tr style="background:#f1f1f1;">
+              <td style="padding:5px;"><input type="date" id="f-date-start" onchange="renderTable()"
+                  style="width:100%; font-size:0.8rem; padding:4px;"></td>
+              <td style="padding:5px;"><input type="text" id="f-buyer" onkeyup="renderTable()" placeholder="Filter..."
+                  style="width:100%; font-size:0.8rem; padding:4px;"></td>
+              <td style="padding:5px;"></td>
+              <td style="padding:5px;">
+                <select id="f-type" onchange="renderTable()" style="width:100%; font-size:0.8rem; padding:4px;">
+                  <option value="all">All</option>
+                  <option value="buy">In</option>
+                  <option value="sell">Out</option>
+                </select>
+              </td>
+              <td style="padding:5px;"><input type="text" id="f-product" onkeyup="renderTable()"
+                  placeholder="Product..." style="width:100%; font-size:0.8rem; padding:4px;"></td>
+              <td style="padding:5px;"><input type="text" id="f-size" onkeyup="renderTable()" placeholder="Size..."
+                  style="width:100%; font-size:0.8rem; padding:4px;"></td>
+              <td colspan="3" style="text-align:right; padding:5px;">
+                <button onclick="exportReport()"
+                  style="background:#27AE60; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">📥
+                  Export View</button>
+              </td>
+            </tr>
+          </thead>
+          <tbody id="full-table-body">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- DATA MANAGEMENT (Transparent Section) -->
+      <div class="data-management">
+        <h3>🛠️ Catalog Manager (Edit/Delete Products)</h3>
+        <p style="font-size:0.8rem; margin-bottom:15px;">Manage your products and sizes here. Hover to see details.</p>
+        <div id="catalog-manager" class="dm-grid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- DEALERS SECTION -->
+    <section id="dealers" class="section">
+      <h2>🤝 Dealer Directory</h2>
+      <div class="filters">
+        <input type="text" id="dealer-search" placeholder="🔍 Find dealer..." onkeyup="renderDealers()">
+      </div>
+      <div id="dealer-grid" class="dealer-list">
+        <!-- Dealer cards go here -->
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>📍 Singampunari, Tamil Nadu | 📞 +91 96263 1025 | 👤 Rajee</p>
+  </footer>
+
+  <script>
+    // --- AUTHENTICATION SYSTEM ---
+    const auth = {
+      master: { user: 'Developer', pass: 'Sanmugapriyan' },
+      users: JSON.parse(localStorage.getItem('UHD_USERS')) || [],
+      currentUser: null,
+
+      init() {
+        // Force Login on Reload
+        this.renderUserList();
+
+        // Allow Enter key on login
+        const passField = document.getElementById('login-pass');
+        if (passField) {
+          passField.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') auth.login();
+          });
+        }
+      },
+
+      login() {
+        const u = document.getElementById('login-user').value.trim();
+        const p = document.getElementById('login-pass').value.trim();
+        const err = document.getElementById('login-error');
+
+        if (!u || !p) return;
+
+        // 1. Check Master
+        if (u === this.master.user && p === this.master.pass) {
+          this.completeLogin(u, 'Master');
+          return;
+        }
+
+        // 2. Check Other Users
+        // User requested: "user name : Developer" - keeping exact.
+        const found = this.users.find(usr => usr.user === u && usr.pass === p);
+        if (found) {
+          this.completeLogin(u, found.role || 'Manager');
+          return;
+        }
+
+        // Fail
+        err.style.display = 'block';
+        err.textContent = '🚫 Access Denied: Invalid Credentials';
+        this.shakeLogin();
+      },
+
+      completeLogin(user, role) {
+        this.currentUser = { user, role };
+        document.getElementById('login-overlay').style.display = 'none';
+        document.getElementById('login-error').style.display = 'none';
+
+        this.applyPermissions(role);
+      },
+
+      applyPermissions(role) {
+        const navUsers = document.getElementById('nav-users');
+        if (navUsers) navUsers.remove(); // Clean up
+
+        // 1. Master: Full Access
+        if (role === 'Master') {
+          this.showMasterControls();
+          this.toggleElement('nav-entry', true);
+          this.toggleElement('nav-dealers', true);
+          this.toggleElement('catalog-manager', true);
+          document.body.classList.remove('role-restricted');
+          return;
+        }
+
+        // Default to restricted
+        this.toggleElement('catalog-manager', false);
+        document.body.classList.add('role-restricted');
+
+        // 3. Role Specifics
+        if (role === 'Manager') {
+          // Manager: Entry + Edit (No User Mgmt)
+          this.toggleElement('nav-entry', true);
+          this.toggleElement('nav-dealers', true);
+          this.toggleElement('catalog-manager', true);
+          document.body.classList.remove('no-edit');
+        }
+        else if (role === 'Supervisor') {
+          // Supervisor: Entry Only (No Edit/Delete)
+          this.toggleElement('nav-entry', true);
+          this.toggleElement('nav-dealers', true);
+          document.body.classList.add('no-edit');
+        }
+        else if (role === 'Accountant') {
+          // Accountant: View Only (No Entry)
+          this.toggleElement('nav-entry', false); // Hide Entry Tab
+          this.toggleElement('nav-dealers', false); // Hide Dealers (Sales) interaction
+          document.body.classList.add('no-edit');
+          document.body.classList.add('no-entry');
+        }
+
+        // Force refresh
+        if (window.renderTable) window.renderTable();
+        if (window.renderDealers) window.renderDealers();
+        if (role === 'Accountant') navigate('home');
+      },
+
+      toggleElement(id, show) {
+        const el = document.getElementById(id);
+        if (el) el.style.display = show ? '' : 'none';
+      },
+
+      shakeLogin() {
+        const box = document.querySelector('.login-box');
+        box.style.transform = 'translateX(10px)';
+        setTimeout(() => box.style.transform = 'translateX(-10px)', 100);
+        setTimeout(() => box.style.transform = 'translateX(0)', 200);
+      },
+
+      // User Management (Master Only)
+      openUserModal() {
+        if (this.currentUser?.role !== 'Master') return;
+        document.getElementById('userModal').style.display = 'flex';
+        this.renderUserList();
+      },
+
+      closeUserModal() {
+        document.getElementById('userModal').style.display = 'none';
+      },
+
+      addUser() {
+        if (this.currentUser?.role !== 'Master') return;
+        const u = document.getElementById('new-u-name').value.trim();
+        const p = document.getElementById('new-u-pass').value.trim();
+        const r = document.getElementById('new-u-role').value;
+
+        if (!u || !p) return alert("Enter username and password");
+        if (u === this.master.user) return alert("Cannot duplicate Master username");
+        if (this.users.find(usr => usr.user === u)) return alert("User already exists");
+
+        this.users.push({ user: u, pass: p, role: r });
+        localStorage.setItem('UHD_USERS', JSON.stringify(this.users));
+
+        document.getElementById('new-u-name').value = '';
+        document.getElementById('new-u-pass').value = '';
+        this.renderUserList();
+        alert(`✅ ${r} Added`);
+      },
+
+      removeUser(uName) {
+        if (this.currentUser?.role !== 'Master') return;
+        if (!confirm(`Remove user "${uName}"?`)) return;
+
+        this.users = this.users.filter(usr => usr.user !== uName);
+        localStorage.setItem('UHD_USERS', JSON.stringify(this.users));
+        this.renderUserList();
+      },
+
+      renderUserList() {
+        const tbody = document.getElementById('user-list-body');
+        if (!tbody) return;
+
+        let html = `
+                <tr style="background:#FFF3CD">
+                    <td>${this.master.user}</td>
+                    <td><b>MASTER</b></td>
+                    <td>-</td>
+                </tr>
+            `;
+
+        this.users.forEach(usr => {
+          // Use inline style to force display if CSS is misbehaving
+          html += `
+                    <tr>
+                        <td>${usr.user}</td>
+                        <td>${usr.role || 'Manager'}</td>
+                        <td>
+                            <button onclick="auth.removeUser('${usr.user}')" 
+                                    class="btn-inline-del" 
+                                    style="display:inline-block; color:red; border:1px solid red; background:#fee; padding:2px 6px; cursor:pointer;">
+                                Remove
+                            </button>
+                        </td>
+                    </tr>
+                `;
+        });
+        tbody.innerHTML = html;
+      },
+
+      showMasterControls() {
+        // Add User Mgmt Button to Nav if not exists
+        if (!document.getElementById('nav-users')) {
+          const nav = document.querySelector('nav');
+          const btn = document.createElement('button');
+          btn.id = 'nav-users';
+          btn.innerHTML = '🔐 Users';
+          btn.onclick = () => auth.openUserModal();
+          btn.style.color = 'var(--grey)';
+          btn.style.borderColor = 'var(--primary)';
+          // Insert before Dealers or at end
+          nav.appendChild(btn);
+        }
+      }
+    };
+
+    // Init Auth on Load
+    window.addEventListener('load', () => auth.init());
+
+
+    // --- State Management ---
+    const DB_KEYS = {
+      TX: 'uhb_transactions',
+      TX: 'udt_tx_v2',
+      TRADERS: 'udt_traders_v2',
+      CATALOG: 'udt_catalog_v2'
+    };
+
+    // Updated Catalog based on user request
+    const DEFAULT_CATALOG = {
+      'Block': ['6 7 15', '6 7 12', '4 7 12'],
+      'Sewage Ring': ['2f', '3f', '3.5f', '4f'],
+      'Lid of sewage ring': ['2f', '3f', '3.5f', '4f'],
+      'Pot': ['2f'],
+      'Compound Post + Slab': ['6f', '8f'],
+      'Window': ['1*1', '2*1', '1.5*1.5', '2*2'],
+      'Hen plate': [],
+      'Exhaust cover': []
+    };
+
+    let state = {
+      transactions: JSON.parse(localStorage.getItem(DB_KEYS.TX)) || [],
+      traders: JSON.parse(localStorage.getItem(DB_KEYS.TRADERS)) || {},
+      catalog: JSON.parse(localStorage.getItem(DB_KEYS.CATALOG)) || DEFAULT_CATALOG,
+      auditLog: JSON.parse(localStorage.getItem('UHD_AUDIT_LOG')) || [] // New Audit Log
+    };
+
+    // --- Init ---
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('t-date').valueAsDate = new Date();
+      updateProducts();
+      updateTraderDataList();
+      refreshAll();
+    });
+
+    function saveData() {
+      localStorage.setItem(DB_KEYS.TX, JSON.stringify(state.transactions));
+      localStorage.setItem(DB_KEYS.TRADERS, JSON.stringify(state.traders));
+      localStorage.setItem(DB_KEYS.CATALOG, JSON.stringify(state.catalog));
+      localStorage.setItem('UHD_AUDIT_LOG', JSON.stringify(state.auditLog));
+    }
+
+    function logAudit(action, details) {
+      state.auditLog.push({
+        timestamp: new Date().toISOString(),
+        action: action,
+        details: details,
+        userTime: new Date().toLocaleString()
+      });
+      saveData();
+    }
+
+    function refreshAll() {
+      renderDashboard();
+      renderTable();
+      renderDealers();
+      updateTraderDataList();
+    }
+
+    // --- Navigation ---
+    window.navigate = (pageId) => {
+      document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('nav button').forEach(el => el.classList.remove('active'));
+
+      document.getElementById(pageId).classList.add('active');
+      document.getElementById(`nav-${pageId}`).classList.add('active');
+    };
+
+    window.setTxType = (type) => {
+      document.getElementById('t-type').value = type;
+
+      // Visual Update
+      document.getElementById('opt-buy').className = `type-option ${type === 'buy' ? 'active buy' : ''}`;
+      document.getElementById('opt-sell').className = `type-option ${type === 'sell' ? 'active sell' : ''}`;
+
+      // Update Button Text
+      const submitBtn = document.getElementById('btn-submit');
+      if (document.getElementById('t-id').value) {
+        submitBtn.textContent = type === 'buy' ? '💾 Update Stock In' : '💾 Update Sale';
+      } else {
+        submitBtn.textContent = type === 'buy' ? '📥 Add Stock' : '📤 Record Sale';
+      }
+    };
+
+    // --- Core Logic ---
+
+    function updateProducts() {
+      const select = document.getElementById('t-product');
+      select.innerHTML = '<option value="">Select Product...</option>';
+
+      Object.keys(state.catalog).forEach(prod => {
+        select.add(new Option(prod, prod));
+      });
+
+      select.add(new Option("➕ Add New Product...", "NEW_PROD"));
+      handleProductChange();
+    }
+
+    function handleProductChange() {
+      const prodSelect = document.getElementById('t-product');
+      const val = prodSelect.value;
+      const customGroup = document.getElementById('newProductGroup');
+      const customInput = document.getElementById('t-custom-product');
+      const delBtn = document.getElementById('btn-del-prod');
+
+      // Show/Hide Delete Button
+      if (val && val !== 'NEW_PROD') {
+        delBtn.style.display = 'flex';
+      } else {
+        delBtn.style.display = 'none';
+      }
+
+      // Toggle New Product Input
+      if (val === 'NEW_PROD') {
+        customGroup.style.display = 'block';
+        customInput.setAttribute('required', 'true');
+        // Clear size dropdown when adding new product
+        updateSizes(null);
+      } else {
+        customGroup.style.display = 'none';
+        customInput.removeAttribute('required');
+        customInput.value = '';
+        updateSizes(val);
+      }
+    }
+
+    function updateSizes(productName) {
+      const sizeSelect = document.getElementById('t-size');
+      sizeSelect.innerHTML = '<option value="">Select Size...</option>';
+
+      if (!productName) {
+        sizeSelect.add(new Option("➕ Add New Size...", "NEW_SIZE")); // Allow adding size for new product
+        handleSizeChange();
+        return;
+      }
+
+      const sizes = state.catalog[productName] || [];
+      sizes.forEach(s => sizeSelect.add(new Option(s, s)));
+
+      sizeSelect.add(new Option("➕ Add New Size...", "NEW_SIZE"));
+      handleSizeChange();
+    }
+
+    function handleSizeChange() {
+      const sizeSelect = document.getElementById('t-size');
+      const val = sizeSelect.value;
+      const customGroup = document.getElementById('newSizeGroup');
+      const customInput = document.getElementById('t-custom-size');
+      const delBtn = document.getElementById('btn-del-size');
+
+      // Show/Hide Delete Button
+      if (val && val !== 'NEW_SIZE') {
+        delBtn.style.display = 'flex';
+      } else {
+        delBtn.style.display = 'none';
+      }
+
+      if (val === 'NEW_SIZE') {
+        customGroup.style.display = 'block';
+        customInput.setAttribute('required', 'true');
+      } else {
+        customGroup.style.display = 'none';
+        customInput.removeAttribute('required');
+        customInput.value = '';
+      }
+    }
+
+    function deleteCurrentProduct() {
+      const prod = document.getElementById('t-product').value;
+      if (prod && confirm(`Delete product "${prod}" and all its sizes permanently?`)) {
+        delete state.catalog[prod];
+        saveData();
+        updateProducts(); // Will reset selection
+        refreshAll(); // Update bottom manager view too
+      }
+    }
+
+    function deleteCurrentSize() {
+      const prod = document.getElementById('t-product').value;
+      const size = document.getElementById('t-size').value;
+      if (prod && size && confirm(`Delete size "${size}" from "${prod}"?`)) {
+        state.catalog[prod] = state.catalog[prod].filter(s => s !== size);
+        saveData();
+        updateSizes(prod); // Refresh sizes to remove deleted one
+        refreshAll();
+      }
+    }
+
+    function fillContact() {
+      const name = document.getElementById('t-name').value.trim();
+      if (state.traders[name]) {
+        document.getElementById('t-contact').value = state.traders[name];
+      }
+    }
+
+    function updateTraderDataList() {
+      const list = document.getElementById('traderList');
+      list.innerHTML = '';
+      Object.keys(state.traders).forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        list.appendChild(opt);
+      });
+    }
+
+    // --- Form Submission ---
+    document.getElementById('tradeForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      let product = document.getElementById('t-product').value;
+      let size = document.getElementById('t-size').value;
+      const newProdName = document.getElementById('t-custom-product').value.trim();
+      const newSizeName = document.getElementById('t-custom-size').value.trim();
+      const name = document.getElementById('t-name').value.trim();
+      const contact = document.getElementById('t-contact').value.trim();
+      const id = document.getElementById('t-id').value; // Check for id
+
+      // Handle New Product
+      if (product === 'NEW_PROD') {
+        if (!newProdName) return alert("Please enter the new product name");
+        product = newProdName;
+        // Init in catalog if not exists
+        if (!state.catalog[product]) {
+          state.catalog[product] = [];
+        }
+      }
+
+      // Handle New Size
+      if (size === 'NEW_SIZE') {
+        if (!newSizeName) return alert("Please enter the new size");
+        size = newSizeName;
+        // Add to catalog for this product
+        if (!state.catalog[product].includes(size)) {
+          state.catalog[product].push(size);
+        }
+      }
+
+      // Save Trader
+      if (contact) state.traders[name] = contact;
+
+      const type = document.getElementById('t-type').value;
+
+      const txnData = {
+        id: id ? parseInt(id) : Date.now(),
+        date: document.getElementById('t-date').value,
+        type: type,
+        name,
+        contact,
+        product,
+        size,
+        qty: parseInt(document.getElementById('t-qty').value),
+        notes: document.getElementById('t-notes').value
+      };
+
+      if (id) {
+        // Update existing
+        const index = state.transactions.findIndex(t => t.id === parseInt(id));
+        if (index !== -1) {
+          const oldTx = state.transactions[index];
+          logAudit('EDIT', { old: oldTx, new: txnData }); // Log the change
+          state.transactions[index] = txnData;
+          alert('Transaction Updated! 🔄');
+        }
+      } else {
+        // Create new
+        state.transactions.unshift(txnData);
+        logAudit('CREATE', txnData); // Log creation
+        alert(type === 'buy' ? 'Stock Added! 📥' : 'Sale Recorded! 📤');
+      }
+
+      saveData();
+      cancelEdit(); // Helper to reset form
+      refreshAll();
+    });
+
+    function cancelEdit() {
+      document.getElementById('t-id').value = '';
+      document.getElementById('t-name').value = '';
+      document.getElementById('t-contact').value = '';
+      document.getElementById('t-qty').value = '';
+      document.getElementById('t-notes').value = '';
+      document.getElementById('t-custom-product').value = '';
+      document.getElementById('t-custom-size').value = '';
+
+      document.getElementById('btn-submit').textContent = '📤 Record Sale';
+      document.getElementById('btn-cancel').style.display = 'none';
+
+      // Reset dropdowns
+      updateProducts();
+    }
+
+    // --- Renderers ---
+
+    function renderDashboard() {
+      // Since we only do sales now, stat-in might be irrelevant but we keep it for old data
+      const buyTotal = state.transactions.filter(t => t.type === 'buy').reduce((acc, t) => acc + t.qty, 0);
+      const sellTotal = state.transactions.filter(t => t.type === 'sell').reduce((acc, t) => acc + t.qty, 0);
+
+      document.getElementById('stat-in').textContent = buyTotal.toLocaleString();
+      document.getElementById('stat-out').textContent = sellTotal.toLocaleString();
+      document.getElementById('stat-total').textContent = state.transactions.length;
+
+      // Low Stock Check
+      checkLowStock();
+
+      // Recent 5
+      const tbody = document.getElementById('recent-table-body');
+      tbody.innerHTML = state.transactions.slice(0, 5).map(t => `
+                <tr>
+                    <td>${t.date}</td>
+                    <td><span class="badge ${t.type === 'buy' ? 'badge-buy' : 'badge-sell'}">${t.type.toUpperCase()}</span></td>
+                    <td>${t.product}</td>
+                    <td>${t.qty}</td>
+                    <td>${t.name}</td>
+                </tr>
+            `).join('');
+
+      // Also render catalog manager
+      renderCatalogManager();
+    }
+
+    function calculateInventory(product, size) {
+      // Just sum ins and subtract outs
+      let total = 0;
+      state.transactions.forEach(t => {
+        if (t.product === product && (t.size === size || (!size && !t.size))) {
+          if (t.type === 'buy') total += t.qty;
+          if (t.type === 'sell') total -= t.qty;
+        }
+      });
+      return total;
+    }
+
+    function checkLowStock() {
+      const LIMIT = 50; // Threshold
+      const alertBox = document.getElementById('lowStockAlert');
+      const list = document.getElementById('lowStockList');
+      list.innerHTML = '';
+      let hasAlerts = false;
+
+      // Iterate Catalog
+      Object.entries(state.catalog).forEach(([prod, sizes]) => {
+        sizes.forEach(size => {
+          const stock = calculateInventory(prod, size);
+          if (stock < LIMIT) {
+            hasAlerts = true;
+            const li = document.createElement('li');
+            li.innerHTML = `<b>${prod} (${size})</b> is low! Current Stock: <span style="color:red; font-weight:bold;">${stock}</span>`;
+            list.appendChild(li);
+          }
+        });
+      });
+
+      alertBox.style.display = hasAlerts ? 'block' : 'none';
+
+      // Also update stat cards if needed (optional)
+      // document.getElementById('stat-stock').textContent = hasAlerts ? "ALERTS ACTIVE" : "OK";
+    }
+
+    function renderCatalogManager() {
+      const container = document.getElementById('catalog-manager');
+
+      let html = `
+          <!-- Bulk Add Section -->
+          <div class="bulk-add-area">
+             <h4 style="margin:0 0 10px 0;">⚡ Bulk Add Items</h4>
+             <div style="display:flex; gap:10px; margin-bottom:5px;">
+                 <select id="bulk-target" style="flex:1;">
+                     <option value="NEW_PROD">★ New Products (One Name Per Line)</option>
+                     ${Object.keys(state.catalog).map(k => `<option value="${k}">Add Sizes to "${k}"</option>`).join('')}
+                 </select>
+                 <button class="btn-primary" onclick="executeBulkAdd()" style="background:#2980b9;">➕ Add All</button>
+             </div>
+             <textarea id="bulk-input" rows="3" placeholder="Enter items here, one per line..."></textarea>
+          </div>
+
+          <!-- Export Section -->
+          <div style="grid-column: 1 / -1; margin-bottom: 20px; display:flex; gap:10px; align-items:center;">
+              <button class="btn-primary" style="background:#27AE60;" onclick="openExportModal()">📥 Download Reports (Categorized)</button>
+              <span style="font-size:0.8rem; color:#666;">Select multiple reports like Sales Log, Inventory, or Audit Trail.</span>
+          </div>
+       `;
+
+      html += Object.entries(state.catalog).map(([prod, sizes]) => `
+          <div class="dm-card">
+              <div class="dm-header">
+                  <span>${prod}</span>
+                  <div>
+                      <button class="btn-icon" onclick="renameProduct('${prod}')" title="Rename Product">✏️</button>
+                      <button class="btn-icon" onclick="deleteProduct('${prod}')" title="Delete Product" style="color:red;">🗑️</button>
+                  </div>
+              </div>
+              <div class="dm-sizes">
+                  ${sizes.map(s => `
+                      <div class="dm-size-item">
+                          <span>${s}</span>
+                          <span style="font-size:0.8rem; color:#666;">(Stock: ${calculateInventory(prod, s)})</span>
+                          <div>
+                              <button class="btn-icon" onclick="renameSize('${prod}', '${s}')" title="Rename Size">✏️</button>
+                              <button class="btn-icon" onclick="deleteSize('${prod}', '${s}')" title="Delete Size" style="color:red;">×</button>
+                          </div>
+                      </div>
+                  `).join('')}
+              </div>
+          </div>
+       `).join('');
+
+      container.innerHTML = html;
+    }
+
+    // --- Bulk Ops & Export Modal Logic ---
+
+    window.executeBulkAdd = () => {
+      const target = document.getElementById('bulk-target').value;
+      const text = document.getElementById('bulk-input').value;
+      if (!text.trim()) return alert("Please enter some items!");
+
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+      let count = 0;
+
+      if (target === 'NEW_PROD') {
+        lines.forEach(line => {
+          if (!state.catalog[line]) {
+            state.catalog[line] = [];
+            count++;
+          }
+        });
+      } else {
+        // Add sizes to existing product
+        if (!state.catalog[target]) return;
+        lines.forEach(line => {
+          if (!state.catalog[target].includes(line)) {
+            state.catalog[target].push(line);
+            count++;
+          }
+        });
+      }
+
+      if (count > 0) {
+        saveData();
+        refreshAll();
+        updateProducts(); // Update dropdowns
+        document.getElementById('bulk-input').value = '';
+        alert(`✅ Added ${count} items successfully!`);
+      } else {
+        alert('⚠️ No new items added (duplicates?).');
+      }
+    };
+
+    // Report Logic
+    window.openExportModal = () => {
+      document.getElementById('exportModal').style.display = 'flex';
+    };
+
+    window.closeExportModal = () => {
+      document.getElementById('exportModal').style.display = 'none';
+    };
+
+    window.downloadSelectedReports = () => {
+      const reports = [];
+      if (document.getElementById('rep-sales').checked) reports.push('sales');
+      if (document.getElementById('rep-in').checked) reports.push('in');
+      if (document.getElementById('rep-inv').checked) reports.push('inv');
+      if (document.getElementById('rep-audit').checked) reports.push('audit');
+
+      if (reports.length === 0) return alert("Select at least one report!");
+
+      // Mock sequential download (browsers might block multiple popups, but usually allow 1-2)
+      // Ideally we zip them, but here we just trigger multiple downloads
+
+      const timestamp = new Date().toISOString().slice(0, 10);
+
+      reports.forEach(type => {
+        if (type === 'sales') {
+          const data = state.transactions.filter(t => t.type === 'sell');
+          exportCSV("Sales_Log_" + timestamp, data, ["Date", "Buyer", "Product", "Size", "Qty", "Notes"]);
+        }
+        if (type === 'in') {
+          const data = state.transactions.filter(t => t.type === 'buy');
+          exportCSV("Stock_In_Log_" + timestamp, data, ["Date", "Product", "Size", "Qty"]);
+        }
+        if (type === 'audit') {
+          // Format audit log
+          const auditData = state.auditLog.map(l => ({
+            Time: l.timestamp, UserTime: l.userTime, Action: l.action, Details: JSON.stringify(l.details).replace(/"/g, '""')
+          }));
+          exportCSV("Audit_Trail_" + timestamp, auditData, ["Time", "UserTime", "Action", "Details"]);
+        }
+        if (type === 'inv') {
+          // Generate Inventory Report
+          const rows = [];
+          Object.entries(state.catalog).forEach(([prod, sizes]) => {
+            sizes.forEach(size => {
+              rows.push({
+                Product: prod, Size: size, Stock: calculateInventory(prod, size)
+              });
+            });
+          });
+          exportCSV("Inventory_Status_" + timestamp, rows, ["Product", "Size", "Stock"]);
+        }
+      });
+
+      closeExportModal();
+    };
+
+    function exportCSV(filename, data, headers) {
+      if (data.length === 0) return; // Skip empty
+
+      // If data is array of objects, extract values based on headers (loosely) or just keys
+      // Simple mapper
+      const validKeys = headers || Object.keys(data[0]);
+
+      const csvRows = [validKeys.join(",")];
+
+      data.forEach(obj => {
+        const row = validKeys.map(k => {
+          const val = obj[k] !== undefined ? obj[k] : (obj[k.toLowerCase()] || '');
+          return `"${val}"`;
+        }).join(",");
+        csvRows.push(row);
+      });
+
+      const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `${filename}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // Existing single export function (kept for table view)
+    window.exportReport = () => {
+      // ... (existing logic)
+      const data = window.currentFilteredData || state.transactions;
+      // Re-use new exportCSV helper
+      exportCSV(`UHD_Filtered_Report_${Date.now()}`, data, ["date", "type", "name", "contact", "product", "size", "qty", "notes"]);
+    };
+
+    // --- Data Management Logic ---
+
+    window.renameProduct = (oldName) => {
+      const newName = prompt("Rename Product:", oldName);
+      if (newName && newName !== oldName) {
+        // Move sizes to new key
+        state.catalog[newName] = state.catalog[oldName];
+        delete state.catalog[oldName];
+
+        // Update history? (Optional, but good for consistency)
+        state.transactions.forEach(t => {
+          if (t.product === oldName) t.product = newName;
+        });
+
+        saveData();
+        refreshAll();
+      }
+    };
+
+    window.deleteProduct = (prodName) => {
+      if (confirm(`Delete "${prodName}" and ALL its sizes? This does not delete transaction history.`)) {
+        delete state.catalog[prodName];
+        saveData();
+        refreshAll();
+      }
+    };
+
+    window.renameSize = (prod, oldSize) => {
+      const newSize = prompt("Rename Size:", oldSize);
+      if (newSize && newSize !== oldSize) {
+        const sizes = state.catalog[prod];
+        const idx = sizes.indexOf(oldSize);
+        if (idx !== -1) {
+          sizes[idx] = newSize;
+
+          // Update history
+          state.transactions.forEach(t => {
+            if (t.product === prod && t.size === oldSize) t.size = newSize;
+          });
+
+          saveData();
+          refreshAll();
+        }
+      }
+    };
+
+    window.deleteSize = (prod, size) => {
+      if (confirm(`Delete size "${size}"?`)) {
+        state.catalog[prod] = state.catalog[prod].filter(s => s !== size);
+        saveData();
+        refreshAll();
+      }
+    };
+
+    window.editTx = (id) => {
+      const tx = state.transactions.find(t => t.id === id);
+      if (!tx) return;
+
+      // Switch to entry (form) tab
+      navigate('entry');
+
+      // Populate Form
+      document.getElementById('t-id').value = tx.id;
+      document.getElementById('t-date').value = tx.date;
+      document.getElementById('t-name').value = tx.name;
+      fillContact(); // auto-fill contact
+      document.getElementById('t-qty').value = tx.qty;
+      document.getElementById('t-notes').value = tx.notes || '';
+
+      // Setup Product/Size
+      // We need to wait for product update to select size
+      updateProducts();
+      document.getElementById('t-product').value = tx.product || tx.material || '';
+      handleProductChange(); // Trigger size load
+
+      document.getElementById('t-size').value = tx.size || '';
+
+      // Change UI to Edit Mode
+      document.getElementById('btn-submit').textContent = '💾 Update Sale';
+      document.getElementById('btn-cancel').style.display = 'inline-block';
+      document.getElementById('tradeForm').scrollIntoView({ behavior: 'smooth' });
+    };
+
+    function renderTable() {
+      // Get Filter Values
+      const fStart = document.getElementById('f-date-start').value;
+      const fBuyer = document.getElementById('f-buyer').value.toLowerCase();
+      const fType = document.getElementById('f-type').value;
+      const fProd = document.getElementById('f-product').value.toLowerCase();
+      const fSize = document.getElementById('f-size').value.toLowerCase();
+
+      const filtered = state.transactions.filter(t => {
+        // Date Logic (Simple >= Start)
+        const dateMatch = !fStart || t.date >= fStart;
+
+        // Type Logic
+        const typeMatch = fType === 'all' || t.type === fType;
+
+        // String Matches
+        const buyerMatch = !fBuyer || t.name.toLowerCase().includes(fBuyer);
+        const prodMatch = !fProd || (t.product && t.product.toLowerCase().includes(fProd));
+        const sizeMatch = !fSize || (t.size && t.size.toLowerCase().includes(fSize));
+
+        return dateMatch && typeMatch && buyerMatch && prodMatch && sizeMatch;
+      });
+
+      const tbody = document.getElementById('full-table-body');
+      tbody.innerHTML = filtered.map(t => `
+                <tr>
+                    <td>${t.date}</td>
+                    <td>${t.name}</td>
+                    <td>${t.contact}</td>
+                    <td><span class="badge ${t.type === 'buy' ? 'badge-buy' : 'badge-sell'}">${t.type.toUpperCase()}</span></td>
+                    <td>${t.product}</td>
+                    <td>${t.size || '-'}</td>
+                    <td>${t.qty}</td>
+                    <td>${t.notes}</td>
+                    <td>
+                        <button onclick="editTx(${t.id})" style="margin-right:5px; border:none; background:none; cursor:pointer;" title="Edit">✏️</button>
+                        <button onclick="deleteTx(${t.id})" style="color:red; border:none; background:none; cursor:pointer;" title="Delete">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+
+      // Store current filtered view for export
+      window.currentFilteredData = filtered;
+    }
+
+    window.exportReport = () => {
+      const data = window.currentFilteredData || state.transactions;
+      if (data.length === 0) return alert("No data to export!");
+
+      const headers = ["Date", "Type", "Buyer", "Contact", "Product", "Size", "Qty", "Notes"];
+      const rows = data.map(t => {
+        return `"${t.date}","${t.type}","${t.name}","${t.contact}","${t.product}","${t.size || ''}","${t.qty}","${t.notes.replace(/"/g, '""')}"`;
+      });
+
+      const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + rows.join("\n");
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `UHD_Report_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
+
+    function deleteTx(id) {
+      if (confirm('Delete this transaction?')) {
+        const tx = state.transactions.find(t => t.id === id);
+        if (tx) logAudit('DELETE', tx); // Audit Log
+        state.transactions = state.transactions.filter(t => t.id !== id);
+        saveData();
+        refreshAll();
+      }
+    };
+
+    function renderDealers() {
+      const search = document.getElementById('dealer-search').value.toLowerCase();
+      const grid = document.getElementById('dealer-grid');
+
+      const entries = Object.entries(state.traders).filter(([name, contact]) => {
+        return name.toLowerCase().includes(search) || contact.includes(search);
+      });
+
+      if (entries.length === 0) {
+        grid.innerHTML = '<p style="color:#aaa; col-span:3;">No dealers found.</p>';
+        return;
+      }
+
+      grid.innerHTML = entries.map(([name, contact]) => `
+                <div class="dealer-card">
+                    <h4>👤 ${name}</h4>
+                    <p>📞 ${contact || 'No Contact'}</p>
+                    <p style="margin-top:5px; font-size:0.8rem;">
+                        <a href="#" onclick="startTrade('${name}')">Make Sale ➡️</a>
+                    </p>
+                </div>
+            `).join('');
+    }
+
+    window.startTrade = (name) => {
+      navigate('trade');
+      document.getElementById('t-name').value = name;
+      fillContact();
+    };
+
+  </script>
+  </script>
+
+  <!-- Export Modal -->
+  <div id="exportModal" class="modal-overlay">
+    <div class="modal-content">
+      <h3 style="margin-top:0;">📥 Download Reports</h3>
+      <p style="color:#666; font-size:0.9rem;">Select the reports you want to generate:</p>
+
+      <div class="modal-checkbox-list">
+        <label class="modal-checkbox-item">
+          <input type="checkbox" id="rep-sales" checked> 📋 Full Sales Log
+        </label>
+        <label class="modal-checkbox-item">
+          <input type="checkbox" id="rep-in"> 📦 Stock In Log
+        </label>
+        <label class="modal-checkbox-item">
+          <input type="checkbox" id="rep-inv"> 📊 Inventory Status (Current Stock)
+        </label>
+        <label class="modal-checkbox-item">
+          <input type="checkbox" id="rep-audit" checked> 🔒 Full Audit Log (Security)
+        </label>
+      </div>
+
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <button onclick="closeExportModal()"
+          style="border:none; background:#eee; padding:10px 15px; border-radius:4px; cursor:pointer;">Cancel</button>
+        <button onclick="downloadSelectedReports()" class="btn-primary">Download Selected</button>
+      </div>
+    </div>
+  </div>
+  <!-- Login Overlay -->
+  <div id="login-overlay">
+    <div class="login-box">
+      <h2>🔐 Security Access</h2>
+      <p style="color:#666; margin-bottom:20px;">Uthaya Hollow Blocks</p>
+
+      <input type="text" id="login-user" class="login-input" placeholder="Username" autocomplete="off">
+      <input type="password" id="login-pass" class="login-input" placeholder="Password">
+
+      <button onclick="auth.login()" class="btn-login">Unlock System</button>
+      <p id="login-error" class="login-error">🚫 Access Denied</p>
+    </div>
+  </div>
+
+  <!-- User Management Modal -->
+  <div id="userModal" class="modal-overlay">
+    <div class="modal-content">
+      <h3 style="margin-top:0;">👥 User Management</h3>
+      <p style="color:#666; font-size:0.9rem;">Only Master can manage users.</p>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+        <input type="text" id="new-u-name" placeholder="New Username"
+          style="padding:10px; border:1px solid #ccc; border-radius:4px;">
+        <input type="text" id="new-u-pass" placeholder="Password"
+          style="padding:10px; border:1px solid #ccc; border-radius:4px;">
+      </div>
+      <div style="display:flex; gap:10px; margin-bottom:20px;">
+        <select id="new-u-role" style="flex:1; padding:10px; border:1px solid #ccc; border-radius:4px;">
+          <option value="Manager">Manager</option>
+          <option value="Supervisor">Supervisor</option>
+          <option value="Accountant">Accountant</option>
+        </select>
+        <button onclick="auth.addUser()" class="btn-primary" style="padding:10px 20px;">ADD USER</button>
+      </div>
+
+      <div class="user-table-container" style="overflow-x:auto;">
+        <table class="data-table" style="width:100%; min-width:400px; table-layout: fixed;">
+          <thead>
+            <tr>
+              <th style="width: 40%">Authors</th>
+              <th style="width: 30%">Designation</th>
+              <th style="width: 30%">Action</th>
+            </tr>
+          </thead>
+          <tbody id="user-list-body"></tbody>
+        </table>
+      </div>
+
+      <div style="margin-top:20px; text-align:right;">
+        <button onclick="auth.closeUserModal()"
+          style="background:#eee; padding:8px 16px; border:none; border-radius:4px; cursor:pointer;">Close</button>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
