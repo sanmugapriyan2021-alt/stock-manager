@@ -654,38 +654,7 @@
         </div>
     </div>
 
-    <!-- USER MANAGEMENT MODAL (Master Only) -->
-    <div id="user-management-modal" class="modal">
-        <div class="modal-content">
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                <h2 style="margin:0;">User Management</h2>
-                <button onclick="closeModal('user-management-modal')"
-                    style="background:none; border:none; font-size:1.5rem;">&times;</button>
-            </div>
 
-            <h4 style="margin:0 0 10px 0;">Add New User</h4>
-            <!-- Form Row Container for Alignment -->
-            <div class="form-row" style="display: flex; align-items: flex-end; gap: 10px; margin-bottom: 20px;">
-                <div style="flex:1;">
-                    <input type="text" id="new-user-name" placeholder="Username" style="margin-bottom:0;">
-                </div>
-                <div style="flex:1;">
-                    <input type="text" id="new-user-pass" placeholder="Password" style="margin-bottom:0;">
-                </div>
-                <!-- Aligned Button -->
-                <button onclick="auth.addNewUser()" class="btn-submit"
-                    style="width:auto; margin-top:0; padding:13px 18px; background:var(--secondary);">
-                    <i class="fas fa-plus"></i>
-                </button>
-            </div>
-
-            <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
-
-            <div id="user-list-container" style="max-height:300px; overflow-y:auto;">
-                <!-- Populated by JS -->
-            </div>
-        </div>
-    </div>
 
     <!-- CUSTOMER PORAL / STATEMENT MODAL -->
     <div id="custPortalModal" class="modal">
@@ -743,11 +712,14 @@
             </div>
             <div style="border-bottom:1px solid #E2E8F0; padding-bottom:15px; margin-bottom:15px;">
                 <h4 style="margin:0 0 10px 0;">Add New User</h4>
-                <div style="display:flex; gap:10px;">
-                    <input type="text" id="new-u-idx" placeholder="Username" style="flex:1;">
-                    <input type="text" id="new-u-pass" placeholder="Password" style="flex:1;">
+                <div style="display:flex; gap:10px; align-items: stretch;">
+                    <input type="text" id="new-u-idx" placeholder="Username"
+                        style="flex:1; margin-bottom:0 !important; height:42px !important; box-sizing:border-box;">
+                    <input type="text" id="new-u-pass" placeholder="Password"
+                        style="flex:1; margin-bottom:0 !important; height:42px !important; box-sizing:border-box;">
                     <button onclick="auth.addUser()" class="btn-submit"
-                        style="width:auto; background:var(--secondary);"><i class="fas fa-plus"></i></button>
+                        style="width:auto; padding:0 20px; background:var(--secondary); height:42px !important; line-height:1; display:flex; align-items:center; justify-content:center; box-sizing:border-box; margin:0 !important;"><i
+                            class="fas fa-plus"></i></button>
                 </div>
             </div>
             <div id="user-list-container">

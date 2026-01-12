@@ -379,76 +379,116 @@ const auth = {
     },
 
     renderUserList() {
-        const container = document.getElementById('user-list-container');
-        let html = '';
+        try {
+            const container = document.getElementById('user-list-container');
+            if (!container) {
+                console.error("User list container not found!");
+                return;
+            }
 
-        // Password Recovery Requests
-        if (state.passRequests.length > 0) {
+            // Ensure state.users is valid
+            if (!state.users) state.users = [];
+
+            let html = '';
+
+            // Password Recovery Requests
+            if (state.passRequests && state.passRequests.length > 0) {
+                html += `
+                    <div style="background:rgba(239, 68, 68, 0.05); padding:10px; border-radius:12px; margin-bottom:15px; border:1px solid rgba(239, 68, 68, 0.1);">
+                        <h4 style="margin:0 0 10px 0; color:var(--danger); display:flex; align-items:center; gap:8px;">
+                            <i class="fas fa-key"></i> Reset Requests
+                        </h4>
+                        ${state.passRequests.map(req => `
+                            <div class="user-list-item" style="border-left:3px solid var(--danger); margin-bottom:8px;">
+                                <div style="flex:1;">
+                                    <div style="font-weight:600;">${req.user}</div>
+                                    <div style="font-size:0.75rem; color:#64748B;">${req.time}</div>
+                                </div>
+                                <div style="display:flex; gap:8px;">
+                                    <button onclick="auth.grantReset('${req.user}')" class="btn-submit" 
+                                        style="width:auto; padding:4px 10px; background:var(--primary); font-size:0.75rem;">Grant</button>
+                                    <button onclick="auth.denyReset('${req.user}')" 
+                                        style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="fas fa-times"></i></button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            // Signup Requests
+            if (state.signupRequests && state.signupRequests.length > 0) {
+                html += `
+                    <div style="background:rgba(236, 72, 153, 0.05); padding:10px; border-radius:12px; margin-bottom:15px; border:1px solid rgba(236, 72, 153, 0.1);">
+                        <h4 style="margin:0 0 10px 0; color:var(--primary); display:flex; align-items:center; gap:8px;">
+                            <i class="fas fa-user-plus"></i> Signup Requests
+                        </h4>
+                        ${state.signupRequests.map(req => `
+                            <div class="user-list-item" style="border-left:3px solid var(--primary); margin-bottom:8px;">
+                                <div style="flex:1;">
+                                    <div style="font-weight:600;">${req.user}</div>
+                                    <div style="font-size:0.75rem; color:#64748B;">Pass: <span style="background:#eee; padding:2px 4px; border-radius:4px;">${req.pass}</span></div>
+                                </div>
+                                <div style="display:flex; gap:8px;">
+                                    <button onclick="auth.approveSignup('${req.user}')" class="btn-submit" 
+                                        style="width:auto; padding:4px 10px; background:var(--primary); font-size:0.75rem;">Approve</button>
+                                    <button onclick="auth.denySignup('${req.user}')" 
+                                        style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="fas fa-times"></i></button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            // Master User (Always Top)
+            const masterPass = localStorage.getItem('udt_master_pass_v2') || this.master.pass;
             html += `
-                <div style="background:rgba(239, 68, 68, 0.05); padding:10px; border-radius:12px; margin-bottom:15px; border:1px solid rgba(239, 68, 68, 0.1);">
-                    <h4 style="margin:0 0 10px 0; color:var(--danger); display:flex; align-items:center; gap:8px;">
-                        <i class="fas fa-key"></i> Reset Requests
-                    </h4>
-                    ${state.passRequests.map(req => `
-                        <div class="user-list-item" style="border-left:3px solid var(--danger); margin-bottom:8px;">
-                            <div style="flex:1;">
-                                <div style="font-weight:600;">${req.user}</div>
-                                <div style="font-size:0.75rem; color:#64748B;">${req.time}</div>
-                            </div>
-                            <div style="display:flex; gap:8px;">
-                                <button onclick="auth.grantReset('${req.user}')" class="btn-submit" 
-                                    style="width:auto; padding:4px 10px; background:var(--primary); font-size:0.75rem;">Grant</button>
-                                <button onclick="auth.denyReset('${req.user}')" 
-                                    style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="fas fa-times"></i></button>
-                            </div>
-                        </div>
-                    `).join('')}
+                <div class="user-list-item" style="background:#f0f9ff; border-color:#bae6fd; display:flex; justify-content:space-between; align-items:center; padding:12px; border-radius:8px; border:1px solid #E2E8F0; margin-bottom:8px;">
+                    <div style="flex:1;">
+                        <div style="font-weight:700; color:#0369a1;">${this.master.user} <span style="font-weight:normal; font-size:0.8rem; color:#0284c7;">(Master / Owner)</span></div>
+                        <div style="font-size:0.75rem; color:#64748B;">Password: <span style="font-family:monospace; background:#fff; padding:2px 6px; border-radius:4px;">${masterPass}</span></div>
+                    </div>
+                    <div style="color:#0369a1; font-size:0.8rem; padding:5px 10px;">
+                        <i class="fas fa-shield-alt"></i> Admin
+                    </div>
                 </div>
             `;
-        }
 
-        // Signup Requests
-        if (state.signupRequests.length > 0) {
-            html += `
-                <div style="background:rgba(236, 72, 153, 0.05); padding:10px; border-radius:12px; margin-bottom:15px; border:1px solid rgba(236, 72, 153, 0.1);">
-                    <h4 style="margin:0 0 10px 0; color:var(--primary); display:flex; align-items:center; gap:8px;">
-                        <i class="fas fa-user-plus"></i> Signup Requests
-                    </h4>
-                    ${state.signupRequests.map(req => `
-                        <div class="user-list-item" style="border-left:3px solid var(--primary); margin-bottom:8px;">
-                            <div style="flex:1;">
-                                <div style="font-weight:600;">${req.user}</div>
-                                <div style="font-size:0.75rem; color:#64748B;">Pass: <span style="background:#eee; padding:2px 4px; border-radius:4px;">${req.pass}</span></div>
-                            </div>
-                            <div style="display:flex; gap:8px;">
-                                <button onclick="auth.approveSignup('${req.user}')" class="btn-submit" 
-                                    style="width:auto; padding:4px 10px; background:var(--primary); font-size:0.75rem;">Approve</button>
-                                <button onclick="auth.denySignup('${req.user}')" 
-                                    style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="fas fa-times"></i></button>
-                            </div>
+            // Existing Users
+            if (state.users && Array.isArray(state.users) && state.users.length > 0) {
+                html += state.users.map(usr => `
+                    <div class="user-list-item" onclick="auth.openUserProfile('${usr.user}')" 
+                        style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; background:white; padding:12px; border-radius:8px; border:1px solid #E2E8F0; margin-bottom:8px;">
+                        <div style="flex:1;">
+                            <div style="font-weight:600; color:#334155;">${usr.user} <span style="font-weight:normal; font-size:0.8rem; color:var(--primary);">(${usr.role || 'Worker'})</span></div>
+                            <div style="font-size:0.75rem; color:#64748B;">Password: <span style="font-family:monospace; background:#f1f5f9; padding:2px 6px; border-radius:4px;">${usr.pass}</span></div>
                         </div>
-                    `).join('')}
-                </div>
-            `;
+                        <button onclick="event.stopPropagation(); auth.removeUser('${usr.user}')" style="background:#fee; color:red; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `).join('');
+            } else {
+                // Debug if emtpy
+                console.warn("No users found in state.users:", state.users);
+            }
+
+            if ((!state.passRequests || state.passRequests.length === 0) && (!state.signupRequests || state.signupRequests.length === 0) && (!state.users || state.users.length === 0)) {
+                html += `
+                    <div style="color:#64748B; text-align:center; padding:20px; border:1px dashed #e2e8f0; border-radius:8px; margin-top:10px;">
+                        <small>No additional users or pending requests.</small>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        } catch (e) {
+            console.error("Error rendering user list:", e);
+            alert("Error rendering user list: " + e.message);
+            const container = document.getElementById('user-list-container');
+            if (container) container.innerHTML = `<div style="color:red; background:#fee; padding:10px; border-radius:8px;"><strong>Rendering Error:</strong> ${e.message}</div>`;
         }
-
-        html += state.users.map(usr => `
-            <div class="user-list-item" onclick="auth.openUserProfile('${usr.user}')" style="cursor:pointer;">
-                <div style="flex:1;">
-                    <div style="font-weight:600;">${usr.user} <span style="font-weight:normal; font-size:0.8rem; color:var(--primary);">(${usr.role || 'Worker'})</span></div>
-                    <div style="font-size:0.75rem; color:#64748B;">Password: <span style="font-family:monospace; background:#f1f5f9; padding:2px 6px; border-radius:4px;">${usr.pass}</span></div>
-                </div>
-                <button onclick="event.stopPropagation(); auth.removeUser('${usr.user}')" style="background:#fee; color:red; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        `).join('');
-
-        if (state.users.length === 0 && state.passRequests.length === 0 && state.signupRequests.length === 0) {
-            html = '<div style="color:#cbd5e1; text-align:center; padding:10px;">No users or requests.</div>';
-        }
-
-        container.innerHTML = html;
     }
 };
 

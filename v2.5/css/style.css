@@ -712,6 +712,24 @@ select:focus {
 /* --- STYLE FIXES & NEW FEATURES --- */
 
 /* LOGIN THEME FIX */
+/* User Management List */
+.user-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #E2E8F0;
+    margin-bottom: 8px;
+    transition: 0.2s;
+}
+
+.user-list-item:hover {
+    background: #F8FAFC;
+    border-color: var(--primary);
+}
+
 .login-overlay {
     /* Professional Full Screen Overlay */
     position: fixed;
