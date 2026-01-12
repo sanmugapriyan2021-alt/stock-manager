@@ -17,6 +17,17 @@ const auth = {
         }
     },
 
+    generatePassword(inputId, iconId) {
+        const pin = Math.floor(1000 + Math.random() * 9000).toString();
+        const input = document.getElementById(inputId);
+        input.value = pin;
+
+        // Make it visible automatically
+        if (input.type === 'password') {
+            this.togglePasswordVisibility(inputId, iconId);
+        }
+    },
+
     init() {
         // Check if already logged in (Simple session var for this SPA)
         const session = sessionStorage.getItem('UHB_ACTIVE_USER');
@@ -99,7 +110,7 @@ const auth = {
         document.getElementById('user-avatar').innerText = this.currentUser.user.charAt(0).toUpperCase();
 
         // Toggle User Management Button
-        document.getElementById('btn-user-mgmt').style.display = isMaster ? 'flex' : 'none';
+        document.getElementById('btn-user-mgmt').style.display = (isMaster || perms.addNew) ? 'flex' : 'none';
 
         // Enforce Navigation Visibility
         const invBtn = document.getElementById('nav-inventory-btn');
@@ -267,6 +278,7 @@ const auth = {
         document.getElementById('p-reports').checked = !!perms.reports;
         document.getElementById('p-limits').checked = !!perms.limits;
         document.getElementById('p-backup').checked = !!perms.backup;
+        document.getElementById('p-new').checked = !!perms.addNew;
 
         document.getElementById('userProfileModal').style.display = 'flex';
         // Close the main user modal if open to avoid overlap confusion
@@ -276,9 +288,9 @@ const auth = {
     applyRoleDefaults() {
         const role = document.getElementById('prof-role').value;
         const defaults = {
-            'Owner': { add: true, edit: true, delete: true, reports: true, limits: true, backup: true },
-            'Worker': { add: true, edit: false, delete: false, reports: false, limits: false, backup: false },
-            'Guest': { add: false, edit: false, delete: false, reports: true, limits: false, backup: false }
+            'Owner': { add: true, edit: true, delete: true, reports: true, limits: true, backup: true, addNew: true },
+            'Worker': { add: true, edit: false, delete: false, reports: false, limits: false, backup: false, addNew: false },
+            'Guest': { add: false, edit: false, delete: false, reports: true, limits: false, backup: false, addNew: false }
         };
         const perms = defaults[role] || defaults['Guest'];
         document.getElementById('p-add').checked = perms.add;
@@ -287,6 +299,7 @@ const auth = {
         document.getElementById('p-reports').checked = perms.reports;
         document.getElementById('p-limits').checked = perms.limits;
         document.getElementById('p-backup').checked = perms.backup;
+        document.getElementById('p-new').checked = perms.addNew;
     },
 
     saveUserProfile() {
@@ -299,7 +312,8 @@ const auth = {
             delete: document.getElementById('p-delete').checked,
             reports: document.getElementById('p-reports').checked,
             limits: document.getElementById('p-limits').checked,
-            backup: document.getElementById('p-backup').checked
+            backup: document.getElementById('p-backup').checked,
+            addNew: document.getElementById('p-new').checked
         };
 
         let user = state.users.find(usr => usr.user === u);
@@ -318,11 +332,18 @@ const auth = {
         this.renderUserList();
         this.applyAuth();
 
-        // Close profile and return to management list
-        document.getElementById('userProfileModal').style.display = 'none';
-        openUserModal();
-
+        this.closeUserProfile();
         showToast(`Profile updated for ${u}`);
+    },
+
+    closeUserProfile() {
+        document.getElementById('userProfileModal').style.display = 'none';
+        if (typeof openUserModal === 'function') {
+            openUserModal();
+        } else {
+            // Fallback if ui.js not loaded or connected differently
+            document.getElementById('userModal').style.display = 'flex';
+        }
     },
 
     denySignup(reqUser, confirmReq = true) {
@@ -358,9 +379,30 @@ const auth = {
 
         if (state.users.find(usr => usr.user.toLowerCase() === u.toLowerCase())) return showToast("User already exists!", "error");
 
-        state.users = [...state.users, { user: u, pass: p, role: 'Staff' }];
-        this.saveUsers();
-        this.renderUserList();
+        // Check Permissions
+        const isMaster = this.currentUser && this.currentUser.role === 'Master';
+
+        if (isMaster) {
+            // Master: Direct Add
+            state.users = [...state.users, { user: u, pass: p, role: 'Staff' }];
+            this.saveUsers();
+            this.renderUserList();
+            showToast(`User ${u} added successfully!`);
+        } else {
+            // Permission 'addNew': Create Request
+            if (state.signupRequests.find(r => r.user.toLowerCase() === u.toLowerCase())) {
+                return showToast("Request already pending!", "warning");
+            }
+
+            state.signupRequests = [...state.signupRequests, {
+                user: u,
+                pass: p,
+                time: new Date().toLocaleString()
+            }];
+            this.saveSignupReqs();
+            showToast(`Request for ${u} sent to Developer/Master!`, "info");
+        }
+
         document.getElementById('new-u-idx').value = '';
         document.getElementById('new-u-pass').value = '';
     },

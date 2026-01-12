@@ -107,7 +107,7 @@
         </div>
 
         <div class="nav-item active" onclick="nav('dashboard')">
-            <i class="fas fa-chart-pie"></i> <span>Dashboard</span>
+            <i class="fas fa-chart-pie"></i> <span>Home</span>
         </div>
         <div class="nav-item" onclick="nav('sales')">
             <i class="fas fa-exchange-alt"></i> <span>Transactions</span>
@@ -149,9 +149,43 @@
         </div>
     </div>
 
+    <!-- MOBILE BOTTOM NAVIGATION -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="nav('dashboard')" id="mob-nav-dashboard">
+            <i class="fas fa-chart-pie"></i>
+            <span style="font-size:0.7rem; display:block;">Home</span>
+        </div>
+        <div class="nav-item" onclick="nav('sales')" id="mob-nav-sales">
+            <i class="fas fa-exchange-alt"></i>
+            <span style="font-size:0.7rem; display:block;">Transact</span>
+        </div>
+        <div class="nav-item" onclick="nav('inventory')" id="mob-nav-inventory">
+            <i class="fas fa-warehouse"></i>
+            <span style="font-size:0.7rem; display:block;">Stock</span>
+        </div>
+        <div class="nav-item" onclick="nav('customers')" id="mob-nav-customers">
+            <i class="fas fa-users"></i>
+            <span style="font-size:0.7rem; display:block;">Cust</span>
+        </div>
+        <div class="nav-item" onclick="nav('reports')" id="mob-nav-reports">
+            <i class="fas fa-file-invoice-dollar"></i>
+            <span style="font-size:0.7rem; display:block;">Report</span>
+        </div>
+        <div class="nav-item" onclick="nav('settings')" id="mob-nav-settings">
+            <i class="fas fa-cog"></i>
+            <span style="font-size:0.7rem; display:block;">Settings</span>
+        </div>
+    </div>
+
     <div class="main-content">
         <div class="header">
-            <div class="page-title" id="page-title" style="flex:1;">Dashboard Overview</div>
+            <!-- Mobile Logo (Visible only on mobile) -->
+            <div id="mobile-logo"
+                style="display:none; font-family:'Rajdhani', sans-serif; font-weight:700; font-size:1.5rem; color:var(--primary); margin-right:10px;">
+                <i class="fas fa-cubes"></i>
+            </div>
+
+            <div class="page-title" id="page-title" style="flex:1;">Home Overview</div>
 
             <!-- Global Controls (Visible on Dashboard, Sales, Inventory) -->
             <div id="global-controls" style="display:flex; gap:10px; align-items:center;">
@@ -170,335 +204,338 @@
                     <i class="fas fa-calendar-alt" style="font-size:1.4rem; color:var(--dark);"></i>
                 </button>
             </div>
-            <option value="3years">3 Years</option>
-            </select>
         </div>
 
-        <div class="mode-toggle-group"
-            style="background:#f1f5f9; padding:4px; border-radius:10px; display:flex; gap:4px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
-            <button onclick="setDashMode('sales')" id="btn-mode-sales" class="mode-toggle-btn active"
-                style="border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:700; font-size:0.85rem; transition: all 0.2s ease;">
-                <i class="fas fa-shopping-cart" style="margin-right:6px;"></i>Sales
-            </button>
-            <button onclick="setDashMode('buy')" id="btn-mode-buy" class="mode-toggle-btn"
-                style="border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:700; font-size:0.85rem; transition: all 0.2s ease; background:transparent; color:#64748B;">
-                <i class="fas fa-truck" style="margin-right:6px;"></i>Purchase
-            </button>
-        </div>
-    </div>
+        <!-- Mode Toggle Group Removed from Global Header to prevent empty space on other pages -->
 
-    </div>
+        <div class="scroll-area">
+            <!-- DASHBOARD VIEW -->
+            <div id="view-dashboard">
 
-    <div class="scroll-area">
-        <!-- DASHBOARD VIEW -->
-        <div id="view-dashboard">
-            <div class="stats-grid">
-                <div class="card stat-card">
-                    <div class="stat-label" id="val-total-label">Total Transactions</div>
-                    <div class="stat-value" id="val-total">0</div>
-                    <div class="trend-up"><i class="fas fa-chart-line" id="val-total-icon"></i> All Time</div>
-                </div>
-                <div class="card stat-card">
-                    <div class="stat-label">Stock Value (Est)</div>
-                    <div class="stat-value" id="val-stock-est">&#8377;0</div>
-                    <div class="trend-up" style="color:var(--primary);"><i class="fas fa-coins" id="val-stock-icon"></i>
-                        Calculate</div>
-                </div>
-            </div>
-
-            <div class="stats-grid" style="grid-template-columns: 2fr 1fr;">
-                <div class="card">
-                    <h3 style="margin:0 0 20px 0;">30 Days Activity</h3>
-                    <div class="chart-container"><canvas id="mainChart"></canvas></div>
-                </div>
-                <div class="card">
-                    <h3 style="margin:0 0 20px 0;">Top Products</h3>
-                    <div class="chart-container"><canvas id="pieChart"></canvas></div>
-                </div>
-            </div>
-
-            <div id="reminders-card" class="card"
-                style="display:none; margin-bottom:30px; border-left:4px solid var(--accent); background:rgba(245, 158, 11, 0.05);">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h4
-                        style="margin:0; color:var(--accent); font-size:0.9rem; text-transform:uppercase; letter-spacing:1px;">
-                        <i class="fas fa-bell"></i> Settlement Reminders (Due Today)
-                    </h4>
-                    <span id="reminder-count"
-                        style="background:var(--accent); color:white; padding:2px 8px; border-radius:12px; font-size:0.7rem; font-weight:700;">0</span>
-                </div>
-                <div id="reminder-list" style="margin-top:15px; display:flex; flex-wrap:wrap; gap:10px;">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
-
-            <h3 style="margin: 30px 0 20px 0;">Recent Transactions</h3>
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Type</th>
-                            <th>Name</th>
-                            <th>Number</th>
-                            <th>Product</th>
-                            <th>Qty</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="recent-table-body"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- SALES VIEW -->
-        <div id="view-sales" style="display:none;">
-            <div
-                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; gap:15px; flex-wrap:wrap;">
-                <h2 style="margin:0;">Transaction Log</h2>
-                <div style="display:flex; gap:10px; flex:1; justify-content:flex-end; align-items:center;">
-                    <!-- Advanced Column Filtering Integrated into Table Headers -->
-                </div>
-            </div>
-            <div class="table-wrapper">
-                <table id="full-table">
-                    <thead>
-                        <tr>
-                            <th style="min-width:120px;">
-                                Date
-                                <input type="date" id="f-date" oninput="renderSalesTable()"
-                                    style="display:block; width:100%; font-size:0.7rem; padding:2px; margin-top:5px; color:black;">
-                            </th>
-                            <th>
-                                Customer/Dealer
-                                <input type="text" id="f-name" placeholder="Filter..." oninput="renderSalesTable()"
-                                    style="display:block; width:100%; font-size:0.7rem; padding:2px; margin-top:5px; color:black;">
-                            </th>
-                            <th>
-                                Product
-                                <select id="f-prod" onchange="renderSalesTable()"
-                                    style="display:block; width:100%; font-size:0.7rem; padding:2px; margin-top:5px; color:black;">
-                                    <option value="all">All</option>
-                                </select>
-                            </th>
-                            <th>
-                                Size
-                                <input type="text" id="f-size" placeholder="Filter..." oninput="renderSalesTable()"
-                                    style="display:block; width:100%; font-size:0.7rem; padding:2px; margin-top:5px; color:black;">
-                            </th>
-                            <th>Qty</th>
-                            <th>Amount</th>
-                            <th>
-                                Status
-                                <select id="f-status" onchange="renderSalesTable()"
-                                    style="display:block; width:100%; font-size:0.7rem; padding:2px; margin-top:5px; color:black;">
-                                    <option value="all">All</option>
-                                    <option value="purchased">Purchased</option>
-                                    <option value="booked">Booked</option>
-                                    <option value="returned">Returned</option>
-                                </select>
-                            </th>
-                            <th style="text-align:right;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="sales-body"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- INVENTORY VIEW -->
-        <div id="view-inventory" style="display:none;">
-            <h2 style="margin-top:0;">Current Stock Levels</h2>
-            <div id="inventory-grid" class="inventory-grid"></div>
-        </div>
-
-        <!-- CUSTOMERS VIEW -->
-        <div id="view-customers" style="display:none;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                <h2 style="margin:0;">Customer Database</h2>
-                <button class="action-btn" onclick="openCustModal()" style="padding:8px 16px; font-size:0.9rem;">
-                    <i class="fas fa-user-plus"></i> Add Customer
-                </button>
-            </div>
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Phone/Contact</th>
-                            <th>Type</th>
-                            <th style="text-align:right;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="customer-table-body"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- REPORTS VIEW -->
-        <div id="view-reports" style="display:none;">
-            <h2 style="margin-top:0; margin-bottom:10px;">Data Intelligence & Reports</h2>
-            <p style="color:#64748B; margin-bottom:30px; font-size:1rem;">Generate and export comprehensive datasets
-                for analysis or accounting.</p>
-
-            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:25px;">
-                <!-- Sales Report Card -->
-                <div class="card detail-card" onclick="generateReport('sales')"
-                    style="border-top:4px solid var(--primary); cursor:pointer; padding:30px;">
-                    <div style="display:flex; align-items:center; gap:20px; margin-bottom:15px;">
-                        <div
-                            style="width:50px; height:50px; background:rgba(245, 158, 11, 0.1); border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--primary); font-size:1.5rem;">
-                            <i class="fas fa-file-invoice"></i>
-                        </div>
-                        <h3 style="margin:0;">Sales Record Export</h3>
-                    </div>
-                    <p style="color:#64748B; font-size:0.9rem; line-height:1.5; margin-bottom:20px;">
-                        Download a detailed log of all sales transactions including customer names, products, and
-                        settlement status.
-                    </p>
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:0.8rem; font-weight:700; color:var(--primary);">CSV / EXCEL
-                            FORMAT</span>
-                        <i class="fas fa-download" style="color:#cbd5e1;"></i>
-                    </div>
-                </div>
-
-                <!-- Stock Report Card -->
-                <div class="card detail-card" onclick="generateReport('stock')"
-                    style="border-top:4px solid var(--secondary); cursor:pointer; padding:30px;">
-                    <div style="display:flex; align-items:center; gap:20px; margin-bottom:15px;">
-                        <div
-                            style="width:50px; height:50px; background:rgba(59, 130, 246, 0.1); border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--secondary); font-size:1.5rem;">
-                            <i class="fas fa-boxes"></i>
-                        </div>
-                        <h3 style="margin:0;">Inventory Valuation</h3>
-                    </div>
-                    <p style="color:#64748B; font-size:0.9rem; line-height:1.5; margin-bottom:20px;">
-                        Export current stock balances across all product categories with their respective sizes and
-                        prices.
-                    </p>
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:0.8rem; font-weight:700; color:var(--secondary);">CURRENT
-                            SNAPSHOT</span>
-                        <i class="fas fa-download" style="color:#cbd5e1;"></i>
-                    </div>
-                </div>
-
-                <!-- Customer List Card -->
-                <div class="card detail-card" onclick="generateReport('customers')"
-                    style="border-top:4px solid #10b981; cursor:pointer; padding:30px;">
-                    <div style="display:flex; align-items:center; gap:20px; margin-bottom:15px;">
-                        <div
-                            style="width:50px; height:50px; background:rgba(16, 185, 129, 0.1); border-radius:12px; display:flex; align-items:center; justify-content:center; color:#10b981; font-size:1.5rem;">
-                            <i class="fas fa-address-book"></i>
-                        </div>
-                        <h3 style="margin:0;">Customer Directory</h3>
-                    </div>
-                    <p style="color:#64748B; font-size:0.9rem; line-height:1.5; margin-bottom:20px;">
-                        Generate a full list of all customers and dealers with their contact information and
-                        categorized types.
-                    </p>
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:0.8rem; font-weight:700; color:#10b981;">CONTACT DATABASE</span>
-                        <i class="fas fa-download" style="color:#cbd5e1;"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- SETTINGS VIEW -->
-        <div id="view-settings" style="display:none;">
-            <h2>Application Settings</h2>
-
-            <div class="stats-grid">
-                <!-- Backup & Restore -->
-                <div class="card">
-                    <h3 style="margin-top:0;"><i class="fas fa-database" style="color:var(--primary);"></i> Data
-                        Management</h3>
-                    <p style="color:#64748B; font-size:0.9rem;">Backup your entire database to a file or restore
-                        from a previous backup.</p>
-                    <div style="display:grid; gap:12px; margin-top:20px;">
-                        <button id="btn-export-db" class="btn-submit" onclick="exportDB()"
-                            style="background:var(--dark);">
-                            <i class="fas fa-download"></i> Export Full Backup (.json)
+                <!-- Moved Sales/Purchase Toggle Here inside Dashboard -->
+                <div style="margin-bottom:20px; display:flex; justify-content:flex-end;">
+                    <div class="mode-toggle-group"
+                        style="background:#f1f5f9; padding:4px; border-radius:10px; display:flex; gap:4px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; width:fit-content;">
+                        <button onclick="setDashMode('sales')" id="btn-mode-sales" class="mode-toggle-btn active"
+                            style="border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:700; font-size:0.85rem; transition: all 0.2s ease;">
+                            <i class="fas fa-shopping-cart" style="margin-right:6px;"></i>Sales
                         </button>
-                        <div style="position:relative;" id="box-import-db">
-                            <input type="file" id="import-file" style="display:none;" onchange="importDB(this)">
-                            <button class="btn-submit" onclick="document.getElementById('import-file').click()"
-                                style="background:var(--secondary);">
-                                <i class="fas fa-upload"></i> Restore from Backup
-                            </button>
-                        </div>
-                        <button id="btn-reset-db" class="btn-submit" onclick="resetDB()"
-                            style="display:none; background:none; border:1px solid var(--danger); color:var(--danger); margin-top:10px;">
-                            <i class="fas fa-trash-alt"></i> Wipe All Data (Master Only)
+                        <button onclick="setDashMode('buy')" id="btn-mode-buy" class="mode-toggle-btn"
+                            style="border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:700; font-size:0.85rem; transition: all 0.2s ease; background:transparent; color:#64748B;">
+                            <i class="fas fa-truck" style="margin-right:6px;"></i>Purchase
                         </button>
                     </div>
                 </div>
 
-                <!-- Catalog Management -->
-                <div class="card">
-                    <h3 style="margin-top:0;"><i class="fas fa-list-ul" style="color:var(--accent);"></i> Catalog
-                        Management</h3>
-                    <p style="color:#64748B; font-size:0.9rem;">Manage products and sizes available in the system.
-                    </p>
-                    <button class="btn-submit" onclick="openCatalogModal()"
-                        style="background:var(--primary); margin-top:20px;">
-                        <i class="fas fa-edit"></i> Manage Products/Sizes
+                <!-- Fixed: Grid now fills width (1fr 1fr) instead of auto-fit which left empty space -->
+                <div class="stats-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="card stat-card">
+                        <div class="stat-label" id="val-total-label">Total Transactions</div>
+                        <div class="stat-value" id="val-total">0</div>
+                        <div class="trend-up"><i class="fas fa-chart-line" id="val-total-icon"></i> All Time</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-label">Stock Value (Est)</div>
+                        <div class="stat-value" id="val-stock-est">&#8377;0</div>
+                        <div class="trend-up" style="color:var(--primary);"><i class="fas fa-coins"
+                                id="val-stock-icon"></i>
+                            Calculate</div>
+                    </div>
+                </div>
+
+                <div class="stats-grid" style="grid-template-columns: 2fr 1fr;">
+                    <div class="card">
+                        <h3 style="margin:0 0 20px 0;">30 Days Activity</h3>
+                        <div class="chart-container"><canvas id="mainChart"></canvas></div>
+                    </div>
+                    <div class="card">
+                        <h3 style="margin:0 0 20px 0;">Top Products</h3>
+                        <div class="chart-container"><canvas id="pieChart"></canvas></div>
+                    </div>
+                </div>
+
+                <div id="reminders-card" class="card"
+                    style="display:none; margin-bottom:30px; border-left:4px solid var(--accent); background:rgba(245, 158, 11, 0.05);">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h4
+                            style="margin:0; color:var(--accent); font-size:0.9rem; text-transform:uppercase; letter-spacing:1px;">
+                            <i class="fas fa-bell"></i> Settlement Reminders (Due Today)
+                        </h4>
+                        <span id="reminder-count"
+                            style="background:var(--accent); color:white; padding:2px 8px; border-radius:12px; font-size:0.7rem; font-weight:700;">0</span>
+                    </div>
+                    <div id="reminder-list" style="margin-top:15px; display:flex; flex-wrap:wrap; gap:10px;">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <h3 style="margin: 30px 0 20px 0;">Recent Transactions</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Name</th>
+                                <th>Number</th>
+                                <th>Product</th>
+                                <th>Qty</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SALES VIEW -->
+            <div id="view-sales" style="display:none;">
+                <div
+                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; gap:15px; flex-wrap:wrap;">
+                    <h2 style="margin:0;">Transaction Log</h2>
+                    <div style="display:flex; gap:10px; flex:1; justify-content:flex-end; align-items:center;">
+                        <!-- Advanced Column Filtering Integrated into Table Headers -->
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table id="full-table">
+                        <thead>
+                            <tr>
+                                <th style="min-width:120px;">
+                                    Date
+                                    <input type="date" id="f-date" oninput="renderSalesTable()"
+                                        style="display:block; width:100%; font-size:0.7rem; padding:2px; margin-top:5px; color:black;">
+                                </th>
+                                <th>
+                                    Customer/Dealer
+                                    <input type="text" id="f-name" placeholder="Filter..." oninput="renderSalesTable()"
+                                        style="display:block; width:100%; font-size:0.7rem; padding:2px; margin-top:5px; color:black;">
+                                </th>
+                                <th>
+                                    Product
+                                    <select id="f-prod" onchange="renderSalesTable()"
+                                        style="display:block; width:100%; font-size:0.7rem; padding:2px; margin-top:5px; color:black;">
+                                        <option value="all">All</option>
+                                    </select>
+                                </th>
+                                <th>
+                                    Size
+                                    <input type="text" id="f-size" placeholder="Filter..." oninput="renderSalesTable()"
+                                        style="display:block; width:100%; font-size:0.7rem; padding:2px; margin-top:5px; color:black;">
+                                </th>
+                                <th>Qty</th>
+                                <th>Amount</th>
+                                <th>
+                                    Status
+                                    <select id="f-status" onchange="renderSalesTable()"
+                                        style="display:block; width:100%; font-size:0.7rem; padding:2px; margin-top:5px; color:black;">
+                                        <option value="all">All</option>
+                                        <option value="purchased">Purchased</option>
+                                        <option value="booked">Booked</option>
+                                        <option value="returned">Returned</option>
+                                    </select>
+                                </th>
+                                <th style="text-align:right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sales-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- INVENTORY VIEW -->
+            <div id="view-inventory" style="display:none;">
+                <h2 style="margin-top:0;">Current Stock Levels</h2>
+                <div id="inventory-grid" class="inventory-grid"></div>
+            </div>
+
+            <!-- CUSTOMERS VIEW -->
+            <div id="view-customers" style="display:none;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                    <h2 style="margin:0;">Customer Database</h2>
+                    <button class="action-btn" onclick="openCustModal()" style="padding:8px 16px; font-size:0.9rem;">
+                        <i class="fas fa-user-plus"></i> Add Customer
                     </button>
                 </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Phone/Contact</th>
+                                <th>Type</th>
+                                <th style="text-align:right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customer-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
 
-                <!-- Tools Section -->
-                <div class="card">
-                    <h3 style="margin-top:0;"><i class="fas fa-toolbox" style="color:#8b5cf6;"></i> Tools</h3>
-                    <div style="display:flex; flex-direction:column; gap:15px; margin-top:20px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <div>
-                                <div style="font-weight:600;">Calculator</div>
-                                <div style="font-size:0.8rem; color:#64748B;">Overlay scientific calculator</div>
+            <!-- REPORTS VIEW -->
+            <div id="view-reports" style="display:none;">
+                <h2 style="margin-top:0; margin-bottom:10px;">Data Intelligence & Reports</h2>
+                <p style="color:#64748B; margin-bottom:30px; font-size:1rem;">Generate and export comprehensive datasets
+                    for analysis or accounting.</p>
+
+                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:25px;">
+                    <!-- Sales Report Card -->
+                    <div class="card detail-card" onclick="generateReport('sales')"
+                        style="border-top:4px solid var(--primary); cursor:pointer; padding:30px;">
+                        <div style="display:flex; align-items:center; gap:20px; margin-bottom:15px;">
+                            <div
+                                style="width:50px; height:50px; background:rgba(245, 158, 11, 0.1); border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--primary); font-size:1.5rem;">
+                                <i class="fas fa-file-invoice"></i>
                             </div>
-                            <label class="switch">
-                                <input type="checkbox" id="tool-calc-toggle" onchange="tools.toggleCalculator()">
-                                <span class="slider round"></span>
-                            </label>
+                            <h3 style="margin:0;">Sales Record Export</h3>
                         </div>
+                        <p style="color:#64748B; font-size:0.9rem; line-height:1.5; margin-bottom:20px;">
+                            Download a detailed log of all sales transactions including customer names, products, and
+                            settlement status.
+                        </p>
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <div>
-                                <div style="font-weight:600;">Calendar Notifications</div>
-                                <div style="font-size:0.8rem; color:#64748B;">Daily task reminders on dashboard
+                            <span style="font-size:0.8rem; font-weight:700; color:var(--primary);">CSV / EXCEL
+                                FORMAT</span>
+                            <i class="fas fa-download" style="color:#cbd5e1;"></i>
+                        </div>
+                    </div>
+
+                    <!-- Stock Report Card -->
+                    <div class="card detail-card" onclick="generateReport('stock')"
+                        style="border-top:4px solid var(--secondary); cursor:pointer; padding:30px;">
+                        <div style="display:flex; align-items:center; gap:20px; margin-bottom:15px;">
+                            <div
+                                style="width:50px; height:50px; background:rgba(59, 130, 246, 0.1); border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--secondary); font-size:1.5rem;">
+                                <i class="fas fa-boxes"></i>
+                            </div>
+                            <h3 style="margin:0;">Inventory Valuation</h3>
+                        </div>
+                        <p style="color:#64748B; font-size:0.9rem; line-height:1.5; margin-bottom:20px;">
+                            Export current stock balances across all product categories with their respective sizes and
+                            prices.
+                        </p>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:0.8rem; font-weight:700; color:var(--secondary);">CURRENT
+                                SNAPSHOT</span>
+                            <i class="fas fa-download" style="color:#cbd5e1;"></i>
+                        </div>
+                    </div>
+
+                    <!-- Customer List Card -->
+                    <div class="card detail-card" onclick="generateReport('customers')"
+                        style="border-top:4px solid #10b981; cursor:pointer; padding:30px;">
+                        <div style="display:flex; align-items:center; gap:20px; margin-bottom:15px;">
+                            <div
+                                style="width:50px; height:50px; background:rgba(16, 185, 129, 0.1); border-radius:12px; display:flex; align-items:center; justify-content:center; color:#10b981; font-size:1.5rem;">
+                                <i class="fas fa-address-book"></i>
+                            </div>
+                            <h3 style="margin:0;">Customer Directory</h3>
+                        </div>
+                        <p style="color:#64748B; font-size:0.9rem; line-height:1.5; margin-bottom:20px;">
+                            Generate a full list of all customers and dealers with their contact information and
+                            categorized types.
+                        </p>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:0.8rem; font-weight:700; color:#10b981;">CONTACT DATABASE</span>
+                            <i class="fas fa-download" style="color:#cbd5e1;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SETTINGS VIEW -->
+            <div id="view-settings" style="display:none;">
+                <h2>Application Settings</h2>
+
+                <div class="stats-grid">
+                    <!-- Backup & Restore -->
+                    <div class="card">
+                        <h3 style="margin-top:0;"><i class="fas fa-database" style="color:var(--primary);"></i> Data
+                            Management</h3>
+                        <p style="color:#64748B; font-size:0.9rem;">Backup your entire database to a file or restore
+                            from a previous backup.</p>
+                        <div style="display:grid; gap:12px; margin-top:20px;">
+                            <button id="btn-export-db" class="btn-submit" onclick="exportDB()"
+                                style="background:var(--dark);">
+                                <i class="fas fa-download"></i> Export Full Backup (.json)
+                            </button>
+                            <div style="position:relative;" id="box-import-db">
+                                <input type="file" id="import-file" style="display:none;" onchange="importDB(this)">
+                                <button class="btn-submit" onclick="document.getElementById('import-file').click()"
+                                    style="background:var(--secondary);">
+                                    <i class="fas fa-upload"></i> Restore from Backup
+                                </button>
+                            </div>
+                            <button id="btn-reset-db" class="btn-submit" onclick="resetDB()"
+                                style="display:none; background:none; border:1px solid var(--danger); color:var(--danger); margin-top:10px;">
+                                <i class="fas fa-trash-alt"></i> Wipe All Data (Master Only)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Catalog Management -->
+                    <div class="card">
+                        <h3 style="margin-top:0;"><i class="fas fa-list-ul" style="color:var(--accent);"></i> Catalog
+                            Management</h3>
+                        <p style="color:#64748B; font-size:0.9rem;">Manage products and sizes available in the system.
+                        </p>
+                        <button class="btn-submit" onclick="openCatalogModal()"
+                            style="background:var(--primary); margin-top:20px;">
+                            <i class="fas fa-edit"></i> Manage Products/Sizes
+                        </button>
+                    </div>
+
+                    <!-- Tools Section -->
+                    <div class="card">
+                        <h3 style="margin-top:0;"><i class="fas fa-toolbox" style="color:#8b5cf6;"></i> Tools</h3>
+                        <div style="display:flex; flex-direction:column; gap:15px; margin-top:20px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <div style="font-weight:600;">Calculator</div>
+                                    <div style="font-size:0.8rem; color:#64748B;">Overlay scientific calculator</div>
                                 </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="tool-calc-toggle" onchange="tools.toggleCalculator()">
+                                    <span class="slider round"></span>
+                                </label>
                             </div>
-                            <label class="switch">
-                                <input type="checkbox" id="tool-cal-toggle" onchange="tools.toggleCalendarNotifs()">
-                                <span class="slider round"></span>
-                            </label>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <div style="font-weight:600;">Calendar Notifications</div>
+                                    <div style="font-size:0.8rem; color:#64748B;">Daily task reminders on dashboard
+                                    </div>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="tool-cal-toggle" onchange="tools.toggleCalendarNotifs()">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Master Security -->
+                <div class="card" id="master-settings-card" style="display:none; margin-top:20px;">
+                    <h3 style="margin-top:0;"><i class="fas fa-shield-alt" style="color:var(--danger);"></i> Security
+                        Settings</h3>
+                    <div style="margin-top:20px;">
+                        <label>Change Master Password</label>
+                        <div style="display:flex; gap:10px; align-items:stretch;">
+                            <div class="password-container" style="flex:1;">
+                                <input type="password" id="new-master-pass" placeholder="Enter new password"
+                                    style="margin-bottom:0;">
+                                <i class="fas fa-eye toggle-password" id="toggle-master-pass"
+                                    onclick="auth.togglePasswordVisibility('new-master-pass', 'toggle-master-pass')"></i>
+                            </div>
+                            <button onclick="changeMasterPass()" class="btn-submit"
+                                style="width:auto; background:var(--danger); margin-top:0;">Update</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Master Security -->
-            <div class="card" id="master-settings-card" style="display:none; margin-top:20px;">
-                <h3 style="margin-top:0;"><i class="fas fa-shield-alt" style="color:var(--danger);"></i> Security
-                    Settings</h3>
-                <div style="margin-top:20px;">
-                    <label>Change Master Password</label>
-                    <div style="display:flex; gap:10px; align-items:stretch;">
-                        <div class="password-container" style="flex:1;">
-                            <input type="password" id="new-master-pass" placeholder="Enter new password"
-                                style="margin-bottom:0;">
-                            <i class="fas fa-eye toggle-password" id="toggle-master-pass"
-                                onclick="auth.togglePasswordVisibility('new-master-pass', 'toggle-master-pass')"></i>
-                        </div>
-                        <button onclick="changeMasterPass()" class="btn-submit"
-                            style="width:auto; background:var(--danger); margin-top:0;">Update</button>
-                    </div>
-                </div>
-            </div>
         </div>
-
-    </div>
     </div>
 
     <!-- STOCK LEDGER MODAL -->
@@ -728,6 +765,38 @@
         </div>
     </div>
 
+    <!-- PRINT PREVIEW MODAL -->
+    <div id="printPreviewModal" class="modal" style="z-index: 10002;">
+        <div class="modal-content" style="max-width: 450px; text-align: center;">
+            <div style="margin-bottom: 20px;">
+                <h3 style="margin:0 0 10px 0; color:var(--dark);">Print Preview</h3>
+                <div style="display:flex; justify-content:center; gap:10px; margin-bottom:10px;">
+                    <button onclick="setPrintFormat('bill')" id="btn-fmt-bill"
+                        style="padding:5px 15px; border-radius:20px; border:1px solid var(--primary); background:var(--primary); color:white; font-size:0.8rem; cursor:pointer;">Bill
+                        (Receipt)</button>
+                    <button onclick="setPrintFormat('invoice')" id="btn-fmt-invoice"
+                        style="padding:5px 15px; border-radius:20px; border:1px solid #ccc; background:white; color:#64748B; font-size:0.8rem; cursor:pointer;">Invoice
+                        (A4)</button>
+                </div>
+                <p style="margin:0; font-size:0.9rem; color:#64748B;">Please check the details before printing.</p>
+            </div>
+
+            <div id="print-preview-content"
+                style="background:#fff; border:1px solid #e2e8f0; padding:15px; margin-bottom:20px; max-height:400px; overflow-y:auto; font-size:0.8rem; text-align:left;">
+                <!-- Content cloned from receipt-print -->
+            </div>
+
+            <div style="display:flex; justify-content:center; gap:15px;">
+                <button onclick="closePrintPreview()"
+                    style="background:#94a3b8; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:600;">Cancel</button>
+                <button onclick="confirmPrint()"
+                    style="background:var(--primary); color:white; border:none; padding:10px 30px; border-radius:8px; cursor:pointer; font-weight:600; display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-print"></i> Print Receipt
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- CUSTOM ALERT MODAL -->
     <div id="customAlertModal" class="modal" style="z-index: 10001;">
         <div class="modal-content" style="max-width: 400px; text-align: center;">
@@ -810,7 +879,7 @@
         <div class="modal-content" style="max-width:500px;">
             <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
                 <h2 style="margin:0;" id="profile-title">User Profile</h2>
-                <button onclick="closeModal('userProfileModal')"
+                <button onclick="auth.closeUserProfile()"
                     style="background:none; border:none; font-size:1.5rem;">&times;</button>
             </div>
             <div id="profile-body">
@@ -819,9 +888,13 @@
                     <input type="text" id="prof-user" readonly style="background:#f8fafc;">
                 </div>
                 <div class="form-group">
-                    <label>Password</label>
+                    <label style="display:flex; justify-content:space-between;">
+                        <span>Password</span>
+                        <a href="#" onclick="auth.generatePassword('prof-pass', 'toggle-prof-pass')"
+                            style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Generate</a>
+                    </label>
                     <div class="password-container">
-                        <input type="password" id="prof-pass">
+                        <input type="password" id="prof-pass" placeholder="Enter or Generate Password">
                         <i class="fas fa-eye toggle-password" id="toggle-prof-pass"
                             onclick="auth.togglePasswordVisibility('prof-pass', 'toggle-prof-pass')"></i>
                     </div>
@@ -861,6 +934,14 @@
                             <input type="checkbox" id="p-backup" style="width:18px; height:18px;"> <span>Backup
                                 Data</span>
                         </label>
+                        <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; cursor:pointer;">
+                            <input type="checkbox" id="p-new" style="width:18px; height:18px;"> <span>Add New
+                                Users</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; cursor:pointer;">
+                            <input type="checkbox" id="p-print" style="width:18px; height:18px;"> <span>Print
+                                Bills</span>
+                        </label>
                     </div>
                 </div>
             </div>
@@ -870,6 +951,7 @@
             </div>
         </div>
     </div>
+    </div> <!-- Close MAIN CONTENT -->
 
     <!-- CALENDAR MODAL -->
     <div id="calendar-modal" class="modal">
@@ -904,36 +986,55 @@
 
     <!-- CALCULATOR WIDGET -->
     <div id="calculator-widget">
-        <div id="calc-handle" title="Drag to move (Coming Soon)"></div>
+        <!-- Draggable Header -->
+        <div id="calculator-widget-header">
+            <div style="flex:1;">
+                <!-- Icons Removed as per user request -->
+            </div>
+            <div style="cursor: pointer;" onclick="tools.toggleCalculator()">
+                <i class="fas fa-times"></i>
+            </div>
+        </div>
+
+        <!-- Display -->
         <div class="calc-display">
             <div class="calc-history" id="calc-history"></div>
             <div class="calc-current" id="calc-current">0</div>
         </div>
+
+        <!-- Keys -->
         <div class="calc-keys">
-            <button class="calc-btn clear" onclick="calc.clear()">AC</button>
-            <button class="calc-btn" onclick="calc.undo()">&#9003;</button>
-            <button class="calc-btn op" onclick="calc.op('%')">%</button>
-            <button class="calc-btn op" onclick="calc.op('/')">&divide;</button>
+            <!-- Row 1 -->
+            <button class="calc-btn func" onclick="calc.clear()">AC</button>
+            <button class="calc-btn func" onclick="calc.input('%')">%</button>
+            <button class="calc-btn func" onclick="calc.backspace()"><i class="fas fa-backspace"></i></button>
+            <button class="calc-btn func" onclick="calc.input('/')">&divide;</button>
 
-            <button class="calc-btn" onclick="calc.num(7)">7</button>
-            <button class="calc-btn" onclick="calc.num(8)">8</button>
-            <button class="calc-btn" onclick="calc.num(9)">9</button>
-            <button class="calc-btn op" onclick="calc.op('*')">&times;</button>
+            <!-- Row 2 -->
+            <button class="calc-btn" onclick="calc.input(7)">7</button>
+            <button class="calc-btn" onclick="calc.input(8)">8</button>
+            <button class="calc-btn" onclick="calc.input(9)">9</button>
+            <button class="calc-btn func" onclick="calc.input('*')">&times;</button>
 
-            <button class="calc-btn" onclick="calc.num(4)">4</button>
-            <button class="calc-btn" onclick="calc.num(5)">5</button>
-            <button class="calc-btn" onclick="calc.num(6)">6</button>
-            <button class="calc-btn op" onclick="calc.op('-')">&minus;</button>
+            <!-- Row 3 -->
+            <button class="calc-btn" onclick="calc.input(4)">4</button>
+            <button class="calc-btn" onclick="calc.input(5)">5</button>
+            <button class="calc-btn" onclick="calc.input(6)">6</button>
+            <button class="calc-btn func" onclick="calc.input('-')">&minus;</button>
 
-            <button class="calc-btn" onclick="calc.num(1)">1</button>
-            <button class="calc-btn" onclick="calc.num(2)">2</button>
-            <button class="calc-btn" onclick="calc.num(3)">3</button>
-            <button class="calc-btn op" onclick="calc.op('+')">+</button>
+            <!-- Row 4 -->
+            <button class="calc-btn" onclick="calc.input(1)">1</button>
+            <button class="calc-btn" onclick="calc.input(2)">2</button>
+            <button class="calc-btn" onclick="calc.input(3)">3</button>
+            <button class="calc-btn func" onclick="calc.input('+')">+</button>
 
-            <button class="calc-btn" onclick="calc.num(0)">0</button>
-            <button class="calc-btn" onclick="calc.num('.')">.</button>
+            <!-- Row 5 -->
+            <button class="calc-btn" onclick="calc.input('.')">.</button>
+            <button class="calc-btn" onclick="calc.input(0)">0</button>
+            <button class="calc-btn" onclick="calc.input('00')">00</button>
             <button class="calc-btn eq" onclick="calc.calculate()">=</button>
         </div>
+        <div class="calc-resize-handle"></div>
     </div>
 
     <!-- SCRIPTS -->
@@ -986,6 +1087,98 @@
         </div>
         <div style="text-align:center; font-size:0.75rem; color:#94A3B8; margin-top:40px;">
             Thank you for your business!<br>This is a computer generated receipt.
+        </div>
+    </div>
+
+    <!-- INVOICE A4 TEMPLATE (Hidden) -->
+    <div id="invoice-print"
+        style="display:none; width:210mm; font-family:'Inter', sans-serif; color:black; background:white; position:relative; box-sizing:border-box;">
+
+        <!-- Header -->
+        <div
+            style="background:#0f172a; color:white; padding:40px; display:flex; justify-content:space-between; align-items:start;">
+            <div>
+                <h1 style="margin:0; font-family:'Rajdhani'; letter-spacing:2px; font-size:2.5rem;"
+                    id="inv-header-name">UHB</h1>
+                <div style="opacity:0.8; font-size:0.9rem; margin-top:5px;" id="inv-header-sub">Uthaya Hollow Blocks &
+                    Allied Products</div>
+                <div style="margin-top:15px; font-size:0.8rem; line-height:1.5; opacity:0.7;">
+                    <div id="inv-header-addr">No 1, Main Road, Trichy</div>
+                    <div id="inv-header-contact">Contact: +91 91590 54341</div>
+                    <div id="inv-header-gst" style="display:none;">GSTIN: </div>
+                </div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:3rem; font-weight:800; opacity:0.1; letter-spacing:5px;">INVOICE</div>
+                <div style="margin-top:-10px;">
+                    <div style="font-size:0.9rem; opacity:0.7;">Invoice #</div>
+                    <div style="font-size:1.5rem; font-weight:700;" id="inv-id">000000</div>
+                </div>
+                <div style="margin-top:15px;">
+                    <div style="font-size:0.9rem; opacity:0.7;">Date</div>
+                    <div style="font-size:1.1rem; font-weight:600;" id="inv-date"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bill To -->
+        <div style="padding:40px; display:flex; justify-content:space-between;">
+            <div>
+                <div style="font-size:0.8rem; font-weight:700; color:#94A3B8; margin-bottom:10px;">BILL TO</div>
+                <div style="font-size:1.1rem; font-weight:700; color:#0f172a;" id="inv-cust-name">Customer Name</div>
+                <div style="font-size:0.9rem; color:#64748B; margin-top:5px;" id="inv-cust-contact">Contact Info</div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div style="padding:0 40px;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+                <thead>
+                    <tr style="background:#F8FAFC; color:#64748B; text-align:left;">
+                        <th style="padding:15px; border-radius:8px 0 0 8px;">Description</th>
+                        <th style="padding:15px; text-align:right;">Rate</th>
+                        <th style="padding:15px; text-align:right;">Qty</th>
+                        <th style="padding:15px; border-radius:0 8px 8px 0; text-align:right;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody style="color:#334155;">
+                    <tr style="border-bottom:1px solid #F1F5F9;">
+                        <td style="padding:20px 15px;" id="inv-prod">Product Name</td>
+                        <td style="padding:20px 15px; text-align:right;" id="inv-rate">0.00</td>
+                        <td style="padding:20px 15px; text-align:right;" id="inv-qty">0</td>
+                        <td style="padding:20px 15px; text-align:right; font-weight:700;" id="inv-amount">0.00</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Totals -->
+        <div style="padding:40px; display:flex; justify-content:flex-end;">
+            <div style="width:250px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:0.9rem;">
+                    <span style="color:#64748B;">Subtotal</span>
+                    <span style="font-weight:600;" id="inv-subtotal">0.00</span>
+                </div>
+                <!-- Tax rows will be injected here if needed, or we just rely on total for now -->
+
+                <div
+                    style="display:flex; justify-content:space-between; margin-top:15px; padding-top:15px; border-top:2px solid #E2E8F0; font-size:1.1rem; font-weight:700; color:#0f172a;">
+                    <span>Total</span>
+                    <span id="inv-total">0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div
+            style="padding:40px; margin-top:50px; border-top:1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-size:0.8rem; color:#94A3B8;">
+                Thank you for your business!
+            </div>
+            <div style="text-align:center;">
+                <div style="height:40px; margin-bottom:10px;"></div> <!-- Sign Space -->
+                <div style="font-size:0.8rem; font-weight:700; color:#0f172a;">Authorized Signatory</div>
+            </div>
         </div>
     </div>
 </body>

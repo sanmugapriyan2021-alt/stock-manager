@@ -1,5 +1,3 @@
-"use strict";
-
 const tools = {
     calculatorEnabled: false,
     calendarNotifsEnabled: false,
@@ -26,6 +24,11 @@ const tools = {
     toggleCalculator() {
         this.calculatorEnabled = !this.calculatorEnabled;
         localStorage.setItem('udt_tool_calc', this.calculatorEnabled);
+
+        // Update Checkbox UI if it exists
+        const toggle = document.getElementById('tool-calc-toggle');
+        if (toggle) toggle.checked = this.calculatorEnabled;
+
         this.showCalculator(this.calculatorEnabled);
     },
 
@@ -41,10 +44,96 @@ const tools = {
         if (btn) btn.style.display = show ? 'block' : 'none';
     },
 
+    resetIdle() {
+        const widget = document.getElementById('calculator-widget');
+        if (widget) {
+            widget.classList.remove('docked');
+            clearTimeout(this.idleTimer);
+            this.idleTimer = setTimeout(() => {
+                widget.classList.add('docked');
+            }, 10000); // 10 seconds auto-dock logic
+        }
+    },
+
     showCalculator(show) {
         const el = document.getElementById('calculator-widget');
-        if (el) el.style.display = show ? 'block' : 'none';
-        if (show) calc.resetIdle();
+        if (el) {
+            el.style.display = show ? 'block' : 'none';
+            if (show) {
+                // Initialize Draggable Logic
+                this.dragElement(el);
+            }
+        }
+    },
+
+    // --- DRAGGABLE LOGIC ---
+    dragElement(elmnt) {
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        if (document.getElementById(elmnt.id + "-header")) {
+            // if present, the header is where you move the DIV from:
+            document.getElementById(elmnt.id + "-header").onmousedown = dragMouseDown;
+            document.getElementById(elmnt.id + "-header").ontouchstart = dragMouseDown; // Mobile Touch
+        } else {
+            // otherwise, move the DIV from anywhere inside the DIV:
+            elmnt.onmousedown = dragMouseDown;
+            elmnt.ontouchstart = dragMouseDown; // Mobile Touch
+        }
+
+        function dragMouseDown(e) {
+            e = e || window.event;
+            // Get the mouse cursor position at startup:
+            if (e.type === 'touchstart') {
+                pos3 = e.touches[0].clientX;
+                pos4 = e.touches[0].clientY;
+            } else {
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+            }
+
+            document.onmouseup = closeDragElement;
+            document.onmousemove = elementDrag;
+
+            // Mobile Events
+            document.ontouchend = closeDragElement;
+            document.ontouchmove = elementDrag;
+        }
+
+        function elementDrag(e) {
+            e = e || window.event;
+
+            let clientX, clientY;
+            if (e.type === 'touchmove') {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                e.preventDefault();
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            // calculate the new cursor position:
+            pos1 = pos3 - clientX;
+            pos2 = pos4 - clientY;
+            pos3 = clientX;
+            pos4 = clientY;
+
+            // set the element's new position:
+            elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+            elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+            elmnt.style.right = 'auto';
+            elmnt.style.bottom = 'auto';
+            // Disable 'transform' if it interferes (center alignment)
+            elmnt.style.transform = 'none';
+        }
+
+        function closeDragElement() {
+            // stop moving when mouse button is released:
+            document.onmouseup = null;
+            document.onmousemove = null;
+            document.ontouchend = null;
+            document.ontouchmove = null;
+        }
     },
 
     /* --- CALENDAR LOGIC --- */
@@ -160,84 +249,79 @@ const tools = {
 const calc = {
     display: document.getElementById('calc-current'),
     history: document.getElementById('calc-history'),
-    current: '0',
-    prev: '',
-    operation: null,
+    expression: '', // Full expression string to evaluate
     historyLog: [],
-    idleTimer: null,
 
-    num(n) {
-        this.resetIdle();
-        if (this.current === '0' && n !== '.') this.current = '';
-        if (n === '.' && this.current.includes('.')) return;
-        this.current += n.toString();
-        this.updateDisplay();
+    // Append number or operator to expression
+    input(val) {
+        // If we just calculated (result is showing), and user types a number, clear first.
+        // If they type an operator, continue with previous result.
+        if (this.justCalculated) {
+            if (!isNaN(val) || val === '.') {
+                this.expression = '';
+            }
+            this.justCalculated = false;
+        }
+
+        // Prevent multiple dots
+        if (val === '.') {
+            const parts = this.expression.split(/[\+\-\*\/%]/);
+            const currentNum = parts[parts.length - 1];
+            if (currentNum.includes('.')) return;
+        }
+
+        this.expression += val;
+        this.updateDisplay(this.expression);
     },
 
-    op(o) {
-        this.resetIdle();
-        if (this.current === '') return;
-        if (this.prev !== '') this.calculate();
-        this.operation = o;
-        this.prev = this.current;
-        this.current = '';
-        this.updateDisplay(true);
+    // Special operations
+    clear() {
+        this.expression = '';
+        this.updateDisplay('0');
+        this.historyLog = [];
+        this.updateHistory('');
+    },
+
+    backspace() {
+        this.expression = this.expression.toString().slice(0, -1);
+        if (this.expression === '') {
+            this.updateDisplay('0');
+        } else {
+            this.updateDisplay(this.expression);
+        }
     },
 
     calculate() {
-        this.resetIdle();
-        let computation;
-        const p = parseFloat(this.prev);
-        const c = parseFloat(this.current);
-        if (isNaN(p) || isNaN(c)) return;
+        if (!this.expression) return;
+        try {
+            // Replace visual operators with JS operators if needed (e.g. x -> *)
+            // Although we are passing standard JS ops in this design
+            let evalStr = this.expression;
 
-        switch (this.operation) {
-            case '+': computation = p + c; break;
-            case '-': computation = p - c; break;
-            case '*': computation = p * c; break;
-            case '/': computation = p / c; break;
-            case '%': computation = p % c; break;
-            default: return;
+            // Safety check: only allow numbers and math chars
+            if (/[^0-9\+\-\*\/\.\%\(\)\s]/.test(evalStr)) {
+                throw new Error("Invalid Input");
+            }
+
+            const result = new Function('return ' + evalStr)();
+            this.updateHistory(this.expression + ' =');
+            this.expression = result.toString();
+            this.updateDisplay(this.expression);
+            this.justCalculated = true;
+        } catch (e) {
+            this.updateDisplay("Error");
+            this.expression = '';
         }
-
-        this.historyLog.push(`${p} ${this.operation} ${c} = ${computation}`);
-        this.current = computation.toString();
-        this.operation = null;
-        this.prev = '';
-        this.updateDisplay();
     },
 
-    clear() {
-        this.resetIdle();
-        this.current = '0';
-        this.prev = '';
-        this.operation = null;
-        this.updateDisplay();
-    },
-
-    undo() {
-        this.resetIdle();
-        this.current = this.current.toString().slice(0, -1);
-        if (this.current === '') this.current = '0';
-        this.updateDisplay();
-    },
-
-    updateDisplay(showOp = false) {
+    updateDisplay(val) {
         const disp = document.getElementById('calc-current');
-        const hist = document.getElementById('calc-history');
-        if (disp) disp.innerText = this.current;
-        if (hist) hist.innerText = showOp ? `${this.prev} ${this.operation}` : (this.historyLog[this.historyLog.length - 1] || '');
+        if (disp) disp.innerText = val || '0';
     },
 
-    resetIdle() {
-        const widget = document.getElementById('calculator-widget');
-        if (widget) {
-            widget.classList.remove('minimized');
-            clearTimeout(this.idleTimer);
-            this.idleTimer = setTimeout(() => {
-                widget.classList.add('minimized');
-            }, 5000); // 5 seconds auto-hide logic (Faster as requested)
-        }
+    updateHistory(val) {
+        const hist = document.getElementById('calc-history');
+        if (hist) hist.innerText = val;
     }
 };
 
@@ -245,9 +329,12 @@ const calc = {
 document.addEventListener('DOMContentLoaded', () => {
     tools.init();
 
-    // Add hover listener to wake calculator
+    // Add listeners to wake/keep awake calculator
     const widget = document.getElementById('calculator-widget');
     if (widget) {
-        widget.addEventListener('mouseenter', () => calc.resetIdle());
+        // Reset idle on any interaction
+        widget.addEventListener('mouseenter', () => tools.resetIdle());
+        widget.addEventListener('mousemove', () => tools.resetIdle());
+        widget.addEventListener('click', () => tools.resetIdle());
     }
 });

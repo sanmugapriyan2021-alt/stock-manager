@@ -907,7 +907,7 @@ function renderSalesTable() {
             </td>
             <td style="text-align:right; white-space:nowrap;">
                 <div style="display:inline-flex; gap:15px; align-items:center;">
-                    <button style="color:var(--primary); border:none; background:none; cursor:pointer; padding:5px; font-size:1.1rem;" onclick="printReceipt(${t.id})" title="Print Receipt"><i class="fas fa-print"></i></button>
+                    ${(isMaster || perms.print !== false) ? `<button style="color:var(--primary); border:none; background:none; cursor:pointer; padding:5px; font-size:1.1rem;" onclick="printReceipt(${t.id})" title="Print Receipt"><i class="fas fa-print"></i></button>` : ''}
                     ${(isMaster || perms.edit) ? `<button style="color:var(--secondary); border:none; background:none; cursor:pointer; padding:5px; font-size:1.1rem;" onclick="editTx(${t.id})"><i class="fas fa-edit"></i></button>` : ''}
                     ${(isMaster || perms.delete) ? `<button style="color:var(--danger); border:none; background:none; cursor:pointer; padding:5px; font-size:1.1rem;" onclick="deleteTx(${t.id})"><i class="fas fa-trash"></i></button>` : ''}
                 </div>
@@ -1114,7 +1114,7 @@ function printReceipt(id) {
     document.getElementById('r-amt').innerText = `\u20B9${(t.amount || 0).toLocaleString('en-IN')} `;
     document.getElementById('r-total').innerText = (t.amount || 0).toLocaleString('en-IN');
 
-    // Payment Method Info in Receipt
+    // Populate the hidden receipt div first
     const pInfo = document.getElementById('r-payment-info');
     pInfo.innerHTML = `Method: ${t.paymentMethod || 'Cash'} ${(t.paymentMethod === 'UPI' && t.upiId) ? `| Ref: ${t.upiId}` : ''} `;
 
@@ -1138,8 +1138,94 @@ function printReceipt(id) {
         sInfo.style.display = 'none';
     }
 
-    const printArea = document.getElementById('receipt-print');
-    printArea.style.display = 'block';
-    window.print();
-    printArea.style.display = 'none';
+    // --- POPULATE A4 INVOICE DATA ---
+    document.getElementById('inv-id').innerText = t.id.toString().slice(-6);
+    document.getElementById('inv-date').innerText = t.date;
+    document.getElementById('inv-cust-name').innerText = t.name;
+    document.getElementById('inv-cust-contact').innerText = contact;
+    document.getElementById('inv-prod').innerText = `${t.product} (${t.size})`;
+
+    // Calculate Rate (Total / Qty)
+    const rate = t.qty > 0 ? (t.amount / t.qty) : 0;
+    document.getElementById('inv-rate').innerText = rate.toFixed(2);
+    document.getElementById('inv-qty').innerText = t.qty;
+    document.getElementById('inv-amount').innerText = (t.amount || 0).toLocaleString('en-IN');
+
+    document.getElementById('inv-subtotal').innerText = (t.amount || 0).toLocaleString('en-IN');
+    document.getElementById('inv-total').innerText = `\u20B9 ${(t.amount || 0).toLocaleString('en-IN')}`;
+
+    // Default to 'bill' view
+    setPrintFormat('bill');
+    document.getElementById('printPreviewModal').style.display = 'flex';
+}
+
+let currentPrintFormat = 'bill';
+
+function setPrintFormat(fmt) {
+    currentPrintFormat = fmt;
+
+    // Update Buttons
+    const btnBill = document.getElementById('btn-fmt-bill');
+    const btnInv = document.getElementById('btn-fmt-invoice');
+
+    if (fmt === 'bill') {
+        btnBill.style.background = 'var(--primary)';
+        btnBill.style.color = 'white';
+        btnBill.style.borderColor = 'var(--primary)';
+
+        btnInv.style.background = 'white';
+        btnInv.style.color = '#64748B';
+        btnInv.style.borderColor = '#ccc';
+
+        const content = document.getElementById('receipt-print').innerHTML;
+        document.getElementById('print-preview-content').innerHTML = content;
+    } else {
+        btnInv.style.background = 'var(--primary)';
+        btnInv.style.color = 'white';
+        btnInv.style.borderColor = 'var(--primary)';
+
+        btnBill.style.background = 'white';
+        btnBill.style.color = '#64748B';
+        btnBill.style.borderColor = '#ccc';
+
+        const content = document.getElementById('invoice-print').innerHTML;
+        document.getElementById('print-preview-content').innerHTML = content;
+    }
+}
+
+function closePrintPreview() {
+    document.getElementById('printPreviewModal').style.display = 'none';
+}
+
+function confirmPrint() {
+    closePrintPreview();
+
+    // Proceed with actual print depending on format
+    const receiptArea = document.getElementById('receipt-print');
+    const invoiceArea = document.getElementById('invoice-print');
+
+    // Reset both to hidden first
+    receiptArea.style.display = 'none';
+    invoiceArea.style.display = 'none';
+
+    // Force the selected one to show
+    if (currentPrintFormat === 'bill') {
+        receiptArea.style.display = 'block';
+        document.body.classList.add('print-bill');
+        document.body.classList.remove('print-invoice');
+    } else {
+        invoiceArea.style.display = 'block';
+        document.body.classList.add('print-invoice');
+        document.body.classList.remove('print-bill');
+    }
+
+    setTimeout(() => {
+        window.print();
+
+        // Cleanup after print dialog closes
+        receiptArea.style.display = 'none';
+        invoiceArea.style.display = 'none';
+        document.body.classList.remove('print-bill');
+        document.body.classList.remove('print-invoice');
+    }, 500);
 }
