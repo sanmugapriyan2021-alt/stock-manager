@@ -1,0 +1,3550 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uthaya Hollow Blocks</title>
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            /* Professional Amber/Blue Theme (Default: Yellow) */
+            --primary: #f59e0b;
+            --primary-dark: #cc7d02;
+            --secondary: #3b82f6;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --darker: #1e293b;
+            --light: #f8fafc;
+            --glass: rgba(255, 255, 255, 0.85);
+            --shadow-color: rgba(245, 158, 11, 0.4);
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --sidebar-width: 260px;
+        }
+
+        body.mode-sales {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --accent: #10b981;
+            --shadow-color: rgba(16, 185, 129, 0.4);
+        }
+
+        body.mode-buy {
+            --primary: #ef4444;
+            --primary-dark: #dc2626;
+            --accent: #ef4444;
+            --shadow-color: rgba(239, 68, 68, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: #fffbeb;
+            color: var(--dark);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+            transition: background 0.5s ease;
+        }
+
+        /* Mode Specific backgrounds */
+        body.mode-sales {
+            background: #f0fdf4 !important;
+            /* Greenish */
+        }
+
+        body.mode-buy {
+            background: #fef2f2 !important;
+            /* Reddish */
+        }
+
+        /* Smooth Opacity Transitions for Sections */
+        #view-dashboard,
+        #view-sales,
+        #view-inventory,
+        #view-customers,
+        #view-reports {
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: white;
+            color: var(--dark);
+            padding: 12px 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 250px;
+            transform: translateX(120%);
+            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            pointer-events: auto;
+            border-left: 5px solid var(--primary);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            border-left-color: #10b981;
+        }
+
+        .toast.error {
+            border-left-color: #ef4444;
+        }
+
+        .toast.warning {
+            border-left-color: #f59e0b;
+        }
+
+        .toast i {
+            font-size: 1.2rem;
+        }
+
+        .toast.success i {
+            color: #10b981;
+        }
+
+        .toast.error i {
+            color: #ef4444;
+        }
+
+        .toast.warning i {
+            color: #f59e0b;
+        }
+
+        /* Floating Action Button */
+        .fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            z-index: 999;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: none;
+        }
+
+        .fab:hover {
+            transform: scale(1.1) rotate(90deg);
+        }
+
+        body.mode-sales .fab {
+            background: var(--primary);
+        }
+
+        body.mode-buy .fab {
+            background: var(--primary);
+        }
+
+        /* Pulse Animation for FAB */
+        @keyframes fab-pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.2);
+            }
+
+            70% {
+                box-shadow: 0 0 0 15px rgba(0, 0, 0, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+            }
+        }
+
+        .fab {
+            animation: fab-pulse 2s infinite;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 80px;
+            background: var(--darker);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .sidebar:hover {
+            width: 260px;
+        }
+
+        .brand {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Center icon */
+            gap: 15px;
+            text-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .sidebar:hover .brand {
+            justify-content: flex-start;
+            padding-left: 10px;
+        }
+
+        .brand span,
+        .nav-item span,
+        .user-info {
+            opacity: 0;
+            display: none;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+        }
+
+        .sidebar:hover .brand span,
+        .sidebar:hover .nav-item span,
+        .sidebar:hover .user-info {
+            opacity: 1;
+            display: inline-block;
+            pointer-events: auto;
+        }
+
+        .nav-item i {
+            font-size: 1.3rem;
+            width: 80px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .nav-item {
+            padding: 14px 0;
+            /* Default: Centered for collapsed state */
+            margin: 4px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Center icons by default */
+            gap: 15px;
+            color: #94A3B8;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar:hover .nav-item {
+            padding: 14px 24px;
+            /* Expanded padding on hover */
+            justify-content: flex-start;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 0;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .nav-item.active::before {
+            width: 5px;
+        }
+
+        /* Removed redundant .sidebar.collapsed .nav-item block */
+
+        .nav-item:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar:hover .nav-item:hover {
+            padding-left: 28px;
+            /* Indent effect only when expanded */
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: var(--darker);
+            box-shadow: 0 4px 12px var(--shadow-color);
+        }
+
+        .nav-item.active i {
+            color: var(--darker);
+        }
+
+        .user-profile {
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 12px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar:hover .user-profile {
+            justify-content: flex-start;
+            padding: 12px;
+            gap: 10px;
+        }
+
+        .sign-out-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            margin-left: auto;
+            font-size: 1.2rem;
+        }
+
+        .sidebar:hover .sign-out-btn {
+            display: block;
+        }
+
+        .shutter-toggle {
+            cursor: pointer;
+            color: var(--primary);
+            font-size: 1.2rem;
+            margin-left: auto;
+            transition: transform 0.3s;
+        }
+
+        .sidebar.collapsed .shutter-toggle {
+            margin: 0 auto;
+            transform: rotate(180deg);
+        }
+
+        /* --- MAIN CONTENT --- */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .header {
+            height: 80px;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px var(--shadow-color);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
+        }
+
+        .scroll-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+        }
+
+        /* --- CARDS --- */
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .stat-value {
+            font-size: 2.8rem;
+            /* Increased from 2.5rem */
+            font-weight: 800;
+            margin: 10px 0 5px 0;
+            color: var(--dark);
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        .stat-label {
+            color: #64748B;
+            font-size: 1.1rem;
+            /* Increased from 0.9rem */
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* --- TABLE --- */
+        .table-wrapper {
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #F8FAFC;
+            text-align: left;
+            padding: 16px 24px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #64748B;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 16px 24px;
+            border-bottom: 1px solid #E2E8F0;
+            color: #334155;
+        }
+
+        tr:hover {
+            background: #F8FAFC;
+        }
+
+        /* --- BADGES --- */
+        .badge {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: inline-block;
+        }
+
+        .badge-mode {
+            background: var(--light);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            opacity: 0.9;
+        }
+
+        .badge-buy {
+            background: #ecfdf5;
+            color: #10b981;
+        }
+
+        .badge-sell {
+            background: #fffbeb;
+            color: var(--primary);
+        }
+
+        .badge-warn {
+            background: #fff1f2;
+            color: #ef4444;
+        }
+
+        .badge-info {
+            background: #eff6ff;
+            color: var(--secondary);
+        }
+
+        /* --- FORMS & MODALS --- */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: flex-start;
+            /* Flow from top */
+            overflow-y: auto;
+            /* Enable scroll */
+            padding: 40px 0;
+            /* Gutter */
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            width: 500px;
+            max-width: 90%;
+            margin: 0 auto;
+            /* Center horizontally */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(40px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #E2E8F0;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: 0.2s;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--primary);
+        }
+
+        .password-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .password-container input {
+            padding-right: 45px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #94a3b8;
+            transition: color 0.2s;
+            z-index: 5;
+        }
+
+        .toggle-password:hover {
+            color: var(--primary);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: var(--dark);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.2s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        /* --- GRID VIEWS --- */
+        .inventory-grid,
+        .customer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .detail-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #E2E8F0;
+            transition: 0.2s;
+        }
+
+        .detail-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .inventory-card:hover {
+            transform: scale(1.02) translateY(-5px);
+            box-shadow: var(--shadow-lg) !important;
+            border-color: var(--primary);
+        }
+
+        .big-number {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'Rajdhani';
+            color: var(--primary);
+        }
+
+        /* --- LOGIN & USER MANAGEMENT --- */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--darker), #1E293B);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            width: 400px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(245, 158, 11, 0.25);
+            border-top: 6px solid var(--primary);
+        }
+
+        .user-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #F8FAFC;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border: 1px solid #E2E8F0;
+        }
+
+        /* Inventory Alert Dot */
+        .nav-alert-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--danger);
+            border-radius: 50%;
+            display: none;
+            /* JS toggles this */
+            position: absolute;
+            top: 12px;
+            left: 48px;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+            border: 2px solid var(--darker);
+        }
+
+        /* Print Receipt Layout */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            #receipt-print,
+            #receipt-print * {
+                visibility: visible;
+            }
+
+            #receipt-print {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 20px;
+                background: white !important;
+                color: black !important;
+            }
+
+            .sidebar,
+            .header,
+            .fab,
+            .modal,
+            .toast-container {
+                display: none !important;
+            }
+        }
+
+        #receipt-print {
+            display: none;
+            font-family: 'Inter', sans-serif;
+            border: 1px solid #eee;
+            padding: 30px;
+            width: 400px;
+            margin: auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- LOGIN OVERLAY -->
+    <div id="login-overlay" class="login-overlay">
+        <div class="login-box">
+            <div class="brand" style="justify-content:center; margin-bottom:20px;">
+                <i class="fas fa-cubes"></i> UHB
+            </div>
+            <div id="login-view">
+                <h3 style="margin-top:0; color:#64748B;">Sign In</h3>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <input type="text" id="login-user" placeholder="Username" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom:10px;">
+                        <div class="password-container">
+                            <input type="password" id="login-pass" placeholder="Password" required>
+                            <i class="fas fa-eye toggle-password" id="toggle-login-pass"
+                                onclick="auth.togglePasswordVisibility('login-pass', 'toggle-login-pass')"></i>
+                        </div>
+                    </div>
+                    <div style="text-align:right; margin-bottom:20px;">
+                        <a href="#" onclick="auth.toggleForgotPassView(true)"
+                            style="color:var(--primary); font-size:0.85rem; text-decoration:none; font-weight:600;">Forgot
+                            Password?</a>
+                    </div>
+                    <button type="submit" class="btn-submit">Login</button>
+                    <div id="login-error" style="color:var(--danger); margin-top:10px; font-weight:600; display:none;">
+                        Invalid Credentials
+                    </div>
+                </form>
+            </div>
+
+            <!-- Password Recovery View -->
+            <div id="forgot-view" style="display:none;">
+                <h3 style="margin-top:0; color:#64748B;">Password Recovery</h3>
+                <p style="font-size:0.9rem; color:#94A3B8; margin-bottom:20px;">Enter your username to request a reset
+                    from the Master.</p>
+                <div class="form-group">
+                    <input type="text" id="recovery-user" placeholder="Your Username">
+                </div>
+                <button onclick="auth.requestPasswordReset()" class="btn-submit"
+                    style="background:var(--secondary);">Send Request</button>
+                <div style="margin-top:15px;">
+                    <a href="#" onclick="auth.toggleForgotPassView(false)"
+                        style="color:#64748B; font-size:0.85rem; text-decoration:none;">Back to Login</a>
+                </div>
+            </div>
+
+            <!-- Signup View -->
+            <div id="signup-view" style="display:none;">
+                <h3 style="margin-top:0; color:#64748B;">Request Access</h3>
+                <p style="font-size:0.9rem; color:#94A3B8; margin-bottom:20px;">Submit your details. The Master will
+                    approve your access shortly.</p>
+                <form id="signupForm">
+                    <div class="form-group">
+                        <input type="text" id="signup-user" placeholder="Desired Username" required>
+                    </div>
+                    <div class="form-group">
+                        <div class="password-container">
+                            <input type="password" id="signup-pass" placeholder="Proposed Password" required>
+                            <i class="fas fa-eye toggle-password" id="toggle-signup-pass"
+                                onclick="auth.togglePasswordVisibility('signup-pass', 'toggle-signup-pass')"></i>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit">Submit Request</button>
+                </form>
+                <div style="margin-top:15px;">
+                    <a href="#" onclick="auth.toggleSignupView(false)"
+                        style="color:#64748B; font-size:0.85rem; text-decoration:none;">Back to Login</a>
+                </div>
+            </div>
+
+            <!-- Login Bottom Links -->
+            <div id="login-bottom-links" style="margin-top:20px; border-top:1px solid #eee; padding-top:20px;">
+                <p style="font-size:0.9rem; color:#64748B;">New user? <a href="#" onclick="auth.toggleSignupView(true)"
+                        style="color:var(--primary); font-weight:600; text-decoration:none;">Create Request</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <div class="sidebar" id="main-sidebar">
+        <div class="brand">
+            <i class="fas fa-cubes"></i> <span>UHB</span>
+        </div>
+
+        <div class="nav-item active" onclick="nav('dashboard')">
+            <i class="fas fa-chart-pie"></i> <span>Dashboard</span>
+        </div>
+        <div class="nav-item" onclick="nav('sales')">
+            <i class="fas fa-exchange-alt"></i> <span>Transactions</span>
+        </div>
+        <div class="nav-item" onclick="nav('inventory')" id="nav-inventory-btn">
+            <i class="fas fa-warehouse"></i> <span>Inventory</span>
+            <div id="inv-alert-dot" class="nav-alert-dot"></div>
+        </div>
+        <div class="nav-item" onclick="nav('customers')">
+            <i class="fas fa-users"></i> <span>Customers</span>
+        </div>
+        <div class="nav-item" onclick="nav('reports')">
+            <i class="fas fa-file-invoice-dollar"></i> <span>Reports</span>
+        </div>
+        <div class="nav-item" onclick="nav('settings')">
+            <i class="fas fa-cog"></i> <span>Settings</span>
+        </div>
+
+        <!-- Master Only: User Management -->
+        <div class="nav-item" onclick="openUserModal()" id="btn-user-mgmt"
+            style="display:none; color:var(--secondary);">
+            <i class="fas fa-user-shield"></i> <span>Users</span>
+            <div id="btn-user-mgmt-badge" class="nav-alert-dot"
+                style="top:10px; left:48px; background:var(--primary); box-shadow:0 0 10px rgba(236, 72, 153, 0.5);">
+            </div>
+        </div>
+
+        <div class="user-profile">
+            <div id="user-avatar"
+                style="width:40px; height:40px; min-width:40px; background:var(--primary); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">
+                U</div>
+            <div class="user-info" style="flex:1; margin-left:10px; overflow:hidden;">
+                <div id="user-name" style="font-weight:700;">User</div>
+                <div id="user-role" style="font-size:0.75rem; opacity:0.7;">Staff</div>
+            </div>
+            <button onclick="auth.logout()" title="Sign Out" class="sign-out-btn">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <div class="page-title" id="page-title" style="flex:1;">Dashboard Overview</div>
+
+            <!-- Global Controls (Visible on Dashboard, Sales, Inventory) -->
+            <div id="global-controls" style="display:flex; gap:10px;">
+                <div id="dash-date-filter">
+                    <select id="date-filter" onchange="renderDashboard()"
+                        style="padding:8px; border-radius:8px; border:1px solid #cbd5e1; cursor:pointer;">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly" selected>Monthly</option>
+                        <option value="6months">6 Months</option>
+                        <option value="1year">1 Year</option>
+                        <option value="3years">3 Years</option>
+                    </select>
+                </div>
+
+                <div class="mode-toggle-group"
+                    style="background:#f1f5f9; padding:4px; border-radius:10px; display:flex; gap:4px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+                    <button onclick="setDashMode('sales')" id="btn-mode-sales" class="mode-toggle-btn active"
+                        style="border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:700; font-size:0.85rem; transition: all 0.2s ease;">
+                        <i class="fas fa-shopping-cart" style="margin-right:6px;"></i>Sales
+                    </button>
+                    <button onclick="setDashMode('buy')" id="btn-mode-buy" class="mode-toggle-btn"
+                        style="border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:700; font-size:0.85rem; transition: all 0.2s ease; background:transparent; color:#64748B;">
+                        <i class="fas fa-truck" style="margin-right:6px;"></i>Purchase
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="scroll-area">
+            <!-- DASHBOARD VIEW -->
+            <div id="view-dashboard">
+                <div class="stats-grid">
+                    <div class="card stat-card">
+                        <div class="stat-label">Total Transactions</div>
+                        <div class="stat-value" id="val-total">0</div>
+                        <div class="trend-up"><i class="fas fa-chart-line"></i> All Time</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-label">Stock Value (Est)</div>
+                        <div class="stat-value" id="val-stock-est">₹0</div>
+                        <div class="trend-up" style="color:var(--primary);"><i class="fas fa-coins"></i> Calculate</div>
+                    </div>
+                </div>
+
+                <div class="stats-grid" style="grid-template-columns: 2fr 1fr;">
+                    <div class="card">
+                        <h3 style="margin:0 0 20px 0;">30 Days Activity</h3>
+                        <div class="chart-container"><canvas id="mainChart"></canvas></div>
+                    </div>
+                    <div class="card">
+                        <h3 style="margin:0 0 20px 0;">Top Products</h3>
+                        <div class="chart-container"><canvas id="pieChart"></canvas></div>
+                    </div>
+                </div>
+
+                <div id="reminders-card" class="card"
+                    style="display:none; margin-bottom:30px; border-left:4px solid var(--accent); background:rgba(245, 158, 11, 0.05);">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h4
+                            style="margin:0; color:var(--accent); font-size:0.9rem; text-transform:uppercase; letter-spacing:1px;">
+                            <i class="fas fa-bell"></i> Settlement Reminders (Due Today)
+                        </h4>
+                        <span id="reminder-count"
+                            style="background:var(--accent); color:white; padding:2px 8px; border-radius:12px; font-size:0.7rem; font-weight:700;">0</span>
+                    </div>
+                    <div id="reminder-list" style="margin-top:15px; display:flex; flex-wrap:wrap; gap:10px;">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <h3 style="margin: 30px 0 20px 0;">Recent Transactions</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Name</th>
+                                <th>Number</th>
+                                <th>Product</th>
+                                <th>Qty</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SALES VIEW -->
+            <div id="view-sales" style="display:none;">
+                <div
+                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; gap:15px; flex-wrap:wrap;">
+                    <h2 style="margin:0;">Transaction Log</h2>
+                    <div style="display:flex; gap:10px; flex:1; justify-content:flex-end; align-items:center;">
+                        <!-- Advanced Column Filtering Integrated into Table Headers -->
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table id="full-table">
+                        <thead>
+                            <tr>
+                                <th style="min-width:120px;">
+                                    Date
+                                    <input type="date" id="f-date" oninput="renderSalesTable()"
+                                        style="display:block; width:100%; font-size:0.7rem; padding:2px; margin-top:5px; color:black;">
+                                </th>
+                                <th>
+                                    Customer/Dealer
+                                    <input type="text" id="f-name" placeholder="Filter..." oninput="renderSalesTable()"
+                                        style="display:block; width:100%; font-size:0.7rem; padding:2px; margin-top:5px; color:black;">
+                                </th>
+                                <th>
+                                    Product
+                                    <select id="f-prod" onchange="renderSalesTable()"
+                                        style="display:block; width:100%; font-size:0.7rem; padding:2px; margin-top:5px; color:black;">
+                                        <option value="all">All</option>
+                                    </select>
+                                </th>
+                                <th>
+                                    Size
+                                    <input type="text" id="f-size" placeholder="Filter..." oninput="renderSalesTable()"
+                                        style="display:block; width:100%; font-size:0.7rem; padding:2px; margin-top:5px; color:black;">
+                                </th>
+                                <th>Qty</th>
+                                <th>Amount</th>
+                                <th>
+                                    Status
+                                    <select id="f-status" onchange="renderSalesTable()"
+                                        style="display:block; width:100%; font-size:0.7rem; padding:2px; margin-top:5px; color:black;">
+                                        <option value="all">All</option>
+                                        <option value="purchased">Purchased</option>
+                                        <option value="booked">Booked</option>
+                                        <option value="returned">Returned</option>
+                                    </select>
+                                </th>
+                                <th style="text-align:right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sales-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- INVENTORY VIEW -->
+            <div id="view-inventory" style="display:none;">
+                <h2 style="margin-top:0;">Current Stock Levels</h2>
+                <div id="inventory-grid" class="inventory-grid"></div>
+            </div>
+
+            <!-- CUSTOMERS VIEW -->
+            <div id="view-customers" style="display:none;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                    <h2 style="margin:0;">Customer Database</h2>
+                    <button class="action-btn" onclick="openCustModal()" style="padding:8px 16px; font-size:0.9rem;">
+                        <i class="fas fa-user-plus"></i> Add Customer
+                    </button>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Phone/Contact</th>
+                                <th>Type</th>
+                                <th style="text-align:right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customer-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- REPORTS VIEW -->
+            <div id="view-reports" style="display:none;">
+                <h2 style="margin-top:0; margin-bottom:10px;">Data Intelligence & Reports</h2>
+                <p style="color:#64748B; margin-bottom:30px; font-size:1rem;">Generate and export comprehensive datasets
+                    for analysis or accounting.</p>
+
+                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:25px;">
+                    <!-- Sales Report Card -->
+                    <div class="card detail-card" onclick="generateReport('sales')"
+                        style="border-top:4px solid var(--primary); cursor:pointer; padding:30px;">
+                        <div style="display:flex; align-items:center; gap:20px; margin-bottom:15px;">
+                            <div
+                                style="width:50px; height:50px; background:rgba(245, 158, 11, 0.1); border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--primary); font-size:1.5rem;">
+                                <i class="fas fa-file-invoice"></i>
+                            </div>
+                            <h3 style="margin:0;">Sales Record Export</h3>
+                        </div>
+                        <p style="color:#64748B; font-size:0.9rem; line-height:1.5; margin-bottom:20px;">
+                            Download a detailed log of all sales transactions including customer names, products, and
+                            settlement status.
+                        </p>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:0.8rem; font-weight:700; color:var(--primary);">CSV / EXCEL
+                                FORMAT</span>
+                            <i class="fas fa-download" style="color:#cbd5e1;"></i>
+                        </div>
+                    </div>
+
+                    <!-- Stock Report Card -->
+                    <div class="card detail-card" onclick="generateReport('stock')"
+                        style="border-top:4px solid var(--secondary); cursor:pointer; padding:30px;">
+                        <div style="display:flex; align-items:center; gap:20px; margin-bottom:15px;">
+                            <div
+                                style="width:50px; height:50px; background:rgba(59, 130, 246, 0.1); border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--secondary); font-size:1.5rem;">
+                                <i class="fas fa-boxes"></i>
+                            </div>
+                            <h3 style="margin:0;">Inventory Valuation</h3>
+                        </div>
+                        <p style="color:#64748B; font-size:0.9rem; line-height:1.5; margin-bottom:20px;">
+                            Export current stock balances across all product categories with their respective sizes and
+                            prices.
+                        </p>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:0.8rem; font-weight:700; color:var(--secondary);">CURRENT
+                                SNAPSHOT</span>
+                            <i class="fas fa-download" style="color:#cbd5e1;"></i>
+                        </div>
+                    </div>
+
+                    <!-- Customer List Card -->
+                    <div class="card detail-card" onclick="generateReport('customers')"
+                        style="border-top:4px solid #10b981; cursor:pointer; padding:30px;">
+                        <div style="display:flex; align-items:center; gap:20px; margin-bottom:15px;">
+                            <div
+                                style="width:50px; height:50px; background:rgba(16, 185, 129, 0.1); border-radius:12px; display:flex; align-items:center; justify-content:center; color:#10b981; font-size:1.5rem;">
+                                <i class="fas fa-address-book"></i>
+                            </div>
+                            <h3 style="margin:0;">Customer Directory</h3>
+                        </div>
+                        <p style="color:#64748B; font-size:0.9rem; line-height:1.5; margin-bottom:20px;">
+                            Generate a full list of all customers and dealers with their contact information and
+                            categorized types.
+                        </p>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:0.8rem; font-weight:700; color:#10b981;">CONTACT DATABASE</span>
+                            <i class="fas fa-download" style="color:#cbd5e1;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SETTINGS VIEW -->
+            <div id="view-settings" style="display:none;">
+                <h2>Application Settings</h2>
+
+                <div class="stats-grid">
+                    <!-- Backup & Restore -->
+                    <div class="card">
+                        <h3 style="margin-top:0;"><i class="fas fa-database" style="color:var(--primary);"></i> Data
+                            Management</h3>
+                        <p style="color:#64748B; font-size:0.9rem;">Backup your entire database to a file or restore
+                            from a previous backup.</p>
+                        <div style="display:grid; gap:12px; margin-top:20px;">
+                            <button id="btn-export-db" class="btn-submit" onclick="exportDB()"
+                                style="background:var(--dark);">
+                                <i class="fas fa-download"></i> Export Full Backup (.json)
+                            </button>
+                            <div style="position:relative;" id="box-import-db">
+                                <input type="file" id="import-file" style="display:none;" onchange="importDB(this)">
+                                <button class="btn-submit" onclick="document.getElementById('import-file').click()"
+                                    style="background:var(--secondary);">
+                                    <i class="fas fa-upload"></i> Restore from Backup
+                                </button>
+                            </div>
+                            <button id="btn-reset-db" class="btn-submit" onclick="resetDB()"
+                                style="display:none; background:none; border:1px solid var(--danger); color:var(--danger); margin-top:10px;">
+                                <i class="fas fa-trash-alt"></i> Wipe All Data (Master Only)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Catalog Management -->
+                    <div class="card">
+                        <h3 style="margin-top:0;"><i class="fas fa-list-ul" style="color:var(--accent);"></i> Catalog
+                            Management</h3>
+                        <p style="color:#64748B; font-size:0.9rem;">Manage products and sizes available in the system.
+                        </p>
+                        <button class="btn-submit" onclick="openCatalogModal()"
+                            style="background:var(--primary); margin-top:20px;">
+                            <i class="fas fa-edit"></i> Manage Products/Sizes
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Master Security -->
+                <div class="card" id="master-settings-card" style="display:none; margin-top:20px;">
+                    <h3 style="margin-top:0;"><i class="fas fa-shield-alt" style="color:var(--danger);"></i> Security
+                        Settings</h3>
+                    <div class="form-group" style="max-width:400px;">
+                        <label>Change Master Password</label>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <div class="password-container" style="flex:1;">
+                                <input type="password" id="new-master-pass" placeholder="Enter new password">
+                                <i class="fas fa-eye toggle-password" id="toggle-master-pass"
+                                    onclick="auth.togglePasswordVisibility('new-master-pass', 'toggle-master-pass')"></i>
+                            </div>
+                            <button class="btn-submit" onclick="changeMasterPass()"
+                                style="width:auto; background:var(--danger); height:48px;">Update</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- STOCK LEDGER MODAL -->
+    <div id="ledgerModal" class="modal">
+        <div class="modal-content" style="max-width:800px; width:95%;">
+            <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:20px;">
+                <div>
+                    <h2 style="margin:0;" id="ledger-title-prod">Product Name</h2>
+                    <div id="ledger-title-size" style="color:#64748B; font-size:1.1rem; font-weight:600;">Size</div>
+                </div>
+                <button onclick="closeModal('ledgerModal')"
+                    style="background:none; border:none; font-size:1.5rem;">&times;</button>
+            </div>
+
+            <div class="table-wrapper" style="max-height:500px; overflow-y:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Entry Type</th>
+                            <th>Customer/Dealer</th>
+                            <th>Qty</th>
+                            <th>Total Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ledger-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW TRANSACTION MODAL -->
+    <div id="txModal" class="modal">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h2 style="margin:0;" id="tx-title">New Transaction</h2>
+                <button onclick="closeModal('txModal')"
+                    style="background:none; border:none; font-size:1.5rem;">&times;</button>
+            </div>
+            <form id="txForm">
+                <input type="hidden" id="t-type" name="type" value="sell">
+
+                <div class="form-top-layer">
+                    <div class="form-group" style="flex:1;">
+                        <label>Date</label>
+                        <input type="date" id="t-date" required>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label>Customer *</label>
+                        <input type="text" id="t-customer" list="traderList" placeholder="Select or type customer..."
+                            required oninput="checkNewCustomer(this.value)">
+                        <datalist id="traderList"></datalist>
+                    </div>
+                </div>
+
+                <div id="new-cust-phone-box"
+                    style="display:none; transition: 0.3s; background: #fff5f7; padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px dashed var(--primary);">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label style="color:var(--primary); font-size:0.8rem; font-weight:700;">
+                            <i class="fas fa-exclamation-triangle"></i> NEW CUSTOMER: Contact Number Required *
+                        </label>
+                        <input type="text" id="t-phone" placeholder="Enter mobile number (10 digits)">
+                    </div>
+                </div>
+
+                <div class="form-top-layer">
+                    <div class="form-group" style="flex:1;">
+                        <label>Product</label>
+                        <select id="t-product" onchange="updateSizeDropdown()"></select>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label>Size</label>
+                        <select id="t-size"></select>
+                    </div>
+                    <div class="form-group" style="width:120px;">
+                        <label>Qty (Units)</label>
+                        <input type="number" id="t-qty" required min="1" value="1">
+                    </div>
+                </div>
+
+                <div class="form-top-layer">
+                    <div class="form-group" style="flex:1;">
+                        <label>Status</label>
+                        <select id="t-status" onchange="toggleSettlementFields()">
+                            <option value="purchased">✅ Purchased (Full Settlement)</option>
+                            <option value="booked">📅 Booked (Partial/No Payment)</option>
+                            <option value="returned">🔄 Returned</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label>Payment Method</label>
+                        <select id="t-payment" onchange="toggleUPIField()">
+                            <option value="Cash">💵 Cash</option>
+                            <option value="UPI">📱 UPI / PhonePe</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="upi-id-box" class="form-group"
+                    style="display:none; transition: 0.3s; background: #f0f9ff; padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px dashed #0ea5e9;">
+                    <label style="color:#0369a1; font-size:0.8rem; font-weight:700;">
+                        <i class="fas fa-fingerprint"></i> UPI Transaction ID
+                    </label>
+                    <input type="text" id="t-upi-id" placeholder="Enter UPI Ref # / Transaction ID">
+                </div>
+
+                <div class="form-top-layer">
+                    <div class="form-group" style="flex:1;">
+                        <label>Total Amount (₹)</label>
+                        <input type="number" id="t-amount" placeholder="0.00" oninput="autoFillPaid()" min="0">
+                    </div>
+                    <div id="paid-amount-box" class="form-group" style="flex:1; display:none;">
+                        <label>Paid Now (Advance/Token)</label>
+                        <input type="number" id="t-paid" placeholder="0.00" min="0">
+                    </div>
+                    <div id="promise-date-box" class="form-group" style="flex:1; display:none;">
+                        <label>Promise Settlement Date</label>
+                        <input type="date" id="t-promise">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">Save Record</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- NEW CUSTOMER MODAL -->
+    <div id="custModal" class="modal">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h2 style="margin:0;">Add Customer</h2>
+                <button onclick="closeModal('custModal')"
+                    style="background:none; border:none; font-size:1.5rem;">&times;</button>
+            </div>
+            <form id="custForm">
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input type="text" id="c-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone / Contact</label>
+                    <input type="text" id="c-contact">
+                </div>
+                <div class="form-group">
+                    <label>Registration Type</label>
+                    <select id="c-type">
+                        <option value="Customer">Customer (Buyer)</option>
+                        <option value="Dealer">Dealer (Supplier)</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-submit" style="background:var(--accent);">Save Customer</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- CUSTOMER PORAL / STATEMENT MODAL -->
+    <div id="custPortalModal" class="modal">
+        <div class="modal-content" style="max-width:800px; width:95%;">
+            <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:20px;">
+                <div>
+                    <h2 style="margin:0;" id="portal-cust-name">Customer Name</h2>
+                    <div id="portal-cust-contact" style="color:#64748B; font-size:0.9rem;">+91 00000 00000</div>
+                </div>
+                <button onclick="closeModal('custPortalModal')"
+                    style="background:none; border:none; font-size:1.5rem;">&times;</button>
+            </div>
+
+            <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom:20px;">
+                <div class="card" style="padding:15px; border-left:4px solid var(--secondary);">
+                    <div style="font-size:0.8rem; color:#64748B;">Total Orders</div>
+                    <div id="portal-total-orders" style="font-weight:700; font-size:1.2rem;">0</div>
+                </div>
+                <div class="card" style="padding:15px; border-left:4px solid #10b981;">
+                    <div style="font-size:0.8rem; color:#64748B;">Total Stock In</div>
+                    <div id="portal-stock-in" style="font-weight:700; font-size:1.2rem;">0</div>
+                </div>
+                <div class="card" style="padding:15px; border-left:4px solid var(--primary);">
+                    <div style="font-size:0.8rem; color:#64748B;">Current Balance</div>
+                    <div id="portal-balance" style="font-weight:700; font-size:1.2rem;">₹0</div>
+                </div>
+            </div>
+
+            <h3 style="margin-bottom:10px; font-size:1rem;">Transaction History (Day-wise)</h3>
+            <div class="table-wrapper" style="max-height:400px; overflow-y:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Product</th>
+                            <th>Status</th>
+                            <th>Type</th>
+                            <th>Qty</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="portal-history-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- USER MANAGEMENT MODAL (Master Only) -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h2 style="margin:0;">User Management</h2>
+                <button onclick="closeModal('userModal')"
+                    style="background:none; border:none; font-size:1.5rem;">&times;</button>
+            </div>
+            <div style="border-bottom:1px solid #E2E8F0; padding-bottom:15px; margin-bottom:15px;">
+                <h4 style="margin:0 0 10px 0;">Add New User</h4>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="new-u-idx" placeholder="Username" style="flex:1;">
+                    <input type="text" id="new-u-pass" placeholder="Password" style="flex:1;">
+                    <button onclick="auth.addUser()" class="btn-submit"
+                        style="width:auto; background:var(--secondary);"><i class="fas fa-plus"></i></button>
+                </div>
+            </div>
+            <div id="user-list-container">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOM ALERT MODAL -->
+    <div id="customAlertModal" class="modal" style="z-index: 10001;">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div style="margin-bottom: 15px; font-size: 3rem; color: var(--primary);" id="alert-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <h3 id="alert-title" style="margin: 0 0 10px 0;">Alert</h3>
+            <p id="alert-msg" style="color: #64748B; margin-bottom: 25px;"></p>
+            <button onclick="closeCustomAlert()" class="btn-submit" style="width: auto; padding: 10px 30px;">OK</button>
+        </div>
+    </div>
+
+    <!-- CUSTOM CONFIRM MODAL -->
+    <div id="customConfirmModal" class="modal" style="z-index: 10002;">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div style="margin-bottom: 15px; font-size: 3rem; color: var(--danger);">
+                <i class="fas fa-question-circle"></i>
+            </div>
+            <h3 id="confirm-title" style="margin: 0 0 10px 0;">Confirm Action</h3>
+            <p id="confirm-msg" style="color: #64748B; margin-bottom: 25px;">Are you sure?</p>
+            <div id="confirm-input-container" style="display:none; margin-bottom: 20px;">
+                <input type="text" id="confirm-input"
+                    style="width: 100%; border: 1px solid #cbd5e1; padding: 10px; border-radius: 8px;">
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button id="btn-confirm-cancel" class="btn-submit"
+                    style="background: #e2e8f0; color: #475569; width: auto; padding: 10px 20px;">Cancel</button>
+                <button id="btn-confirm-ok" class="btn-submit"
+                    style="background: var(--danger); width: auto; padding: 10px 20px;">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TRANSACTION MODAL -->
+    <div id="txModal" class="modal">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h2 style="margin:0;" id="tx-title">Sales Entry</h2>
+                <button onclick="closeModal('txModal')"
+                    style="background:none; border:none; font-size:1.5rem;">&times;</button>
+            </div>
+            <form id="txForm">
+                <input type="hidden" id="t-type">
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="t-date" required>
+                </div>
+
+                <!-- Dynamic Customer/Trader Section -->
+                <div class="form-group">
+                    <label>Buyer/Seller</label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="t-buyer" list="trader-list" placeholder="Select or type name" required
+                            style="flex:1;">
+                        <datalist id="trader-list"></datalist>
+                        <button type="button" onclick="openTraderModal()"
+                            style="background:var(--secondary); color:white; border:none; border-radius:8px; width:40px;"><i
+                                class="fas fa-user-plus"></i></button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Product</label>
+                    <div style="display:flex; gap:10px;">
+                        <select id="t-prod" required onchange="updateSizeDropdown()" style="flex:1;">
+                            <option value="">Select Product</option>
+                        </select>
+                        <select id="t-size" required style="flex:1;">
+                            <option value="">Select Size</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Details</label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="number" id="t-qty" placeholder="Quantity" required style="flex:1;">
+                        <input type="number" id="t-amount" placeholder="Total Amount (₹)" required style="flex:1;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Payment Status</label>
+                    <select id="t-status" onchange="toggleSettlementFields()">
+                        <option value="purchased">Paid/Received</option>
+                        <!-- "Purchased" acts as "Paid" for Sales too in this legacy logic, we might need to map it -->
+                        <option value="booked">Booked (Credit)</option>
+                    </select>
+                </div>
+
+                <div id="settlement-fields"
+                    style="display:none; background:#f8fafc; padding:10px; border-radius:8px; margin-bottom:15px;">
+                    <label style="font-size:0.85rem;">Expected Settlement Date</label>
+                    <input type="date" id="t-settle-date">
+                </div>
+
+                <button type="submit" class="btn-submit">Save Transaction</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- CATALOG MANAGEMENT MODAL -->
+    <div id="catalogModal" class="modal">
+        <div class="modal-content" style="max-width:600px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h2 style="margin:0;">Manage Catalog</h2>
+                <div
+                    style="background:#f1f5f9; padding:3px; border-radius:8px; display:flex; gap:3px; border:1px solid #e2e8f0;">
+                    <button id="mgr-cat-sales" onclick="catalog.setMgrMode('sales')"
+                        style="border:none; padding:4px 12px; border-radius:6px; font-size:0.75rem; font-weight:700; cursor:pointer; background:white; box-shadow:0 1px 3px rgba(0,0,0,0.1); color:#ec4899;">Sales</button>
+                    <button id="mgr-cat-buy" onclick="catalog.setMgrMode('buy')"
+                        style="border:none; padding:4px 12px; border-radius:6px; font-size:0.75rem; font-weight:700; cursor:pointer; background:transparent; color:#64748B;">Purchase</button>
+                </div>
+                <button onclick="closeModal('catalogModal')"
+                    style="background:none; border:none; font-size:1.5rem; line-height:1;">&times;</button>
+            </div>
+
+            <div style="background:#f8fafc; padding:15px; border-radius:12px; margin-bottom:20px;">
+                <h4 style="margin:0 0 10px 0;">Add to Catalog</h4>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                    <input type="text" id="new-prod-name" placeholder="Product Name (e.g. Brick)" style="flex:1;">
+                    <input type="text" id="new-prod-size" placeholder="Size (e.g. 6 inch)" style="flex:1;">
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <input type="number" id="new-prod-price" placeholder="Price per piece (₹)" style="flex:1;">
+                    <button onclick="catalog.addProduct()" class="btn-submit"
+                        style="width:auto; background:var(--primary); padding:0 20px;"><i class="fas fa-plus"></i> Add
+                        Item</button>
+                </div>
+            </div>
+
+            <div id="catalog-list" style="max-height:400px; overflow-y:auto;">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- USER PROFILE & PERMISSIONS MODAL -->
+    <div id="userProfileModal" class="modal">
+        <div class="modal-content" style="max-width:500px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h2 style="margin:0;" id="profile-title">User Profile</h2>
+                <button onclick="closeModal('userProfileModal')"
+                    style="background:none; border:none; font-size:1.5rem;">&times;</button>
+            </div>
+            <div id="profile-body">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="prof-user" readonly style="background:#f8fafc;">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="password-container">
+                        <input type="password" id="prof-pass">
+                        <i class="fas fa-eye toggle-password" id="toggle-prof-pass"
+                            onclick="auth.togglePasswordVisibility('prof-pass', 'toggle-prof-pass')"></i>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Assigned Role</label>
+                    <select id="prof-role" onchange="auth.applyRoleDefaults()">
+                        <option value="Owner">Owner</option>
+                        <option value="Worker">Worker</option>
+                        <option value="Guest">Guest</option>
+                    </select>
+                </div>
+                <div style="margin-top:20px;">
+                    <h4 style="margin:0 0 15px 0; color:var(--primary);">Access Permissions</h4>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; cursor:pointer;">
+                            <input type="checkbox" id="p-add" style="width:18px; height:18px;"> <span>Add
+                                Transactions</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; cursor:pointer;">
+                            <input type="checkbox" id="p-edit" style="width:18px; height:18px;"> <span>Edit
+                                Transactions</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; cursor:pointer;">
+                            <input type="checkbox" id="p-delete" style="width:18px; height:18px;"> <span>Delete
+                                Transactions</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; cursor:pointer;">
+                            <input type="checkbox" id="p-reports" style="width:18px; height:18px;"> <span>View
+                                Reports</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; cursor:pointer;">
+                            <input type="checkbox" id="p-limits" style="width:18px; height:18px;"> <span>Stock
+                                Limits</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; cursor:pointer;">
+                            <input type="checkbox" id="p-backup" style="width:18px; height:18px;"> <span>Backup
+                                Data</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top:30px; text-align:right;">
+                <button class="btn-submit" style="width:auto; padding:10px 30px;" onclick="auth.saveUserProfile()">Save
+                    Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA LAYER ---
+        const DB_KEYS = {
+            TX: 'udt_tx_v2', // Deprecated
+            SALES: 'udt_sales_v3',
+            PURCHASE: 'udt_purchase_v3',
+            CATALOG_SALES: 'udt_catalog_sales_v1',
+            CATALOG_PURCHASE: 'udt_catalog_purchase_v1',
+            CATALOG: 'udt_catalog_v2', // Keep for migration
+            TRADERS: 'udt_traders_v2',
+            USERS: 'udt_users_v2',
+            THRESHOLDS: 'udt_thresholds_v2',
+            PASS_REQS: 'udt_pass_reqs_v2',
+            SIGNUP_REQS: 'udt_signup_reqs_v2'
+        };
+
+        let state = {
+            sales: JSON.parse(localStorage.getItem(DB_KEYS.SALES)) || [],
+            purchases: JSON.parse(localStorage.getItem(DB_KEYS.PURCHASE)) || [],
+            transactions: JSON.parse(localStorage.getItem(DB_KEYS.TX)) || [], // Temporary for migration
+            catalogSales: JSON.parse(localStorage.getItem(DB_KEYS.CATALOG_SALES)) || {
+                'Block': [{ size: '6 inch', price: 50 }, { size: '4 inch', price: 40 }, { size: '8 inch', price: 60 }],
+                'Ring': [{ size: '3 ft', price: 500 }, { size: '4 ft', price: 700 }, { size: '2 ft', price: 300 }],
+                'Cover': [{ size: '1.5 ft', price: 200 }, { size: '2 ft', price: 250 }]
+            },
+            catalogPurchase: JSON.parse(localStorage.getItem(DB_KEYS.CATALOG_PURCHASE)) || {
+                'Dust': [{ size: 'Default', price: 0 }],
+                'Jalli': [{ size: 'Default', price: 0 }],
+                'Cement': [{ size: 'Default', price: 0 }]
+            },
+            catalog: JSON.parse(localStorage.getItem(DB_KEYS.CATALOG)) || {}, // For migration
+            traders: JSON.parse(localStorage.getItem(DB_KEYS.TRADERS)) || {
+                'Walk-in': 'Unknown'
+            },
+            // Users: [{user, pass}]
+            users: JSON.parse(localStorage.getItem(DB_KEYS.USERS)) || [],
+            // Pass Requests: [{user, time}]
+            passRequests: JSON.parse(localStorage.getItem(DB_KEYS.PASS_REQS)) || [],
+            // Thresholds: {'Product-Size': limit}
+            thresholds: JSON.parse(localStorage.getItem(DB_KEYS.THRESHOLDS)) || {},
+            // Signup Requests: [{user, pass, time}]
+            signupRequests: JSON.parse(localStorage.getItem(DB_KEYS.SIGNUP_REQS)) || [],
+            // UI State
+            dashMode: 'sales', // 'sales' or 'buy'
+            dateFilter: 'monthly',
+            currentPage: 'dashboard'
+        };
+
+        // Helper to get active catalog
+        function getCatalog(type) {
+            return (type === 'buy' || (type === undefined && state.dashMode === 'buy'))
+                ? state.catalogPurchase
+                : state.catalogSales;
+        }
+
+        // Helper to save active catalog
+        function saveCatalog(type) {
+            const isBuy = (type === 'buy' || (type === undefined && state.dashMode === 'buy'));
+            const key = isBuy ? DB_KEYS.CATALOG_PURCHASE : DB_KEYS.CATALOG_SALES;
+            const data = isBuy ? state.catalogPurchase : state.catalogSales;
+            localStorage.setItem(key, JSON.stringify(data));
+        }
+
+        // Helper to get active transaction list
+        function getTransactions(type) {
+            return (type === 'buy' || (type === undefined && state.dashMode === 'buy'))
+                ? state.purchases
+                : state.sales;
+        }
+
+        // Helper to get all transactions combined (for stock calc)
+        function getAllTx() {
+            // Ensure all items have a type for compatibility
+            return [
+                ...state.sales.map(t => ({ ...t, type: t.type || 'sell' })),
+                ...state.purchases.map(t => ({ ...t, type: t.type || 'buy' }))
+            ];
+        }
+
+        // --- AUTH SYSTEM ---
+        const auth = {
+            master: { user: 'Developer', pass: 'Sanmugapriyan' },
+            currentUser: null,
+
+            togglePasswordVisibility(inputId, iconId) {
+                const input = document.getElementById(inputId);
+                const icon = document.getElementById(iconId);
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            },
+
+            init() {
+                // Check if already logged in (Simple session var for this SPA)
+                const session = sessionStorage.getItem('UHB_ACTIVE_USER');
+                if (session) {
+                    this.currentUser = JSON.parse(session);
+                    this.applyAuth();
+                } else {
+                    document.getElementById('login-overlay').style.display = 'flex';
+                }
+            },
+
+            login(u, p) {
+                // Master
+                const masterPass = localStorage.getItem('udt_master_pass_v2') || this.master.pass;
+                if (u.toLowerCase() === this.master.user.toLowerCase()) {
+                    if (p === masterPass) {
+                        this.setSession({ user: this.master.user, role: 'Master' });
+                        return { success: true };
+                    } else {
+                        return { success: false, msg: "Incorrect Password for Master" };
+                    }
+                }
+
+                // Custom Users
+                // Check if user exists first
+                const userExists = state.users.find(usr => usr.user.toLowerCase() === u.toLowerCase());
+
+                if (userExists) {
+                    if (userExists.pass === p) {
+                        this.setSession({ user: userExists.user, role: userExists.role || 'Staff' });
+                        return { success: true };
+                    } else {
+                        return { success: false, msg: "Incorrect Password" };
+                    }
+                }
+
+                // Master Reset Backdoor (Hidden feature: User=RESET_MASTER, Pass=UHB123!)
+                if (u === 'RESET_MASTER' && p === 'UHB2026!') {
+                    if (confirm("SYSTEM OVERRIDE: Reset Master Password to default?")) {
+                        localStorage.removeItem('udt_master_pass_v2');
+                        this.master.pass = 'Sanmugapriyan';
+                        return { success: false, msg: "Master Password Reset to Default: Sanmugapriyan" };
+                    }
+                }
+
+                return { success: false, msg: "User not found" };
+            },
+
+            setSession(userObj) {
+                this.currentUser = userObj;
+                sessionStorage.setItem('UHB_ACTIVE_USER', JSON.stringify(userObj));
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('login-user').value = '';
+                document.getElementById('login-pass').value = '';
+                this.applyAuth();
+            },
+
+            logout() {
+                this.currentUser = null;
+                sessionStorage.removeItem('UHB_ACTIVE_USER');
+                document.getElementById('login-overlay').style.display = 'flex';
+                document.getElementById('login-error').style.display = 'none';
+                // Reset View
+                nav('dashboard');
+            },
+
+            applyAuth() {
+                const isMaster = this.currentUser.role === 'Master';
+                // Granular Permissions
+                const perms = isMaster ?
+                    { add: true, edit: true, delete: true, reports: true, limits: true, backup: true } :
+                    (this.currentUser.permissions || { add: true, edit: false, delete: false, reports: false, limits: false, backup: false });
+
+                this.currentUser.permissions = perms;
+
+                // Update Sidebar Profile
+                document.getElementById('user-name').innerText = this.currentUser.user;
+                document.getElementById('user-role').innerText = this.currentUser.role || 'Worker';
+                document.getElementById('user-avatar').innerText = this.currentUser.user.charAt(0).toUpperCase();
+
+                // Toggle User Management Button
+                document.getElementById('btn-user-mgmt').style.display = isMaster ? 'flex' : 'none';
+
+                // Enforce Navigation Visibility
+                const invBtn = document.getElementById('nav-inventory-btn');
+                if (invBtn) invBtn.style.display = (perms.reports || isMaster) ? 'flex' : 'none';
+
+                const repBtn = document.querySelector('[onclick="nav(\'reports\')"]');
+                if (repBtn) repBtn.style.display = (perms.reports || isMaster) ? 'flex' : 'none';
+
+                // Show FAB button only if allowed
+                const fab = document.getElementById('fab-add');
+                if (fab) fab.style.display = (perms.add || isMaster) ? 'flex' : 'none';
+
+                // Update User Notification Dot (Master Only)
+                const userBadge = document.getElementById('btn-user-mgmt-badge');
+                if (userBadge) {
+                    const totalReqs = state.passRequests.length + state.signupRequests.length;
+                    userBadge.style.display = (isMaster && totalReqs > 0) ? 'block' : 'none';
+                }
+
+                // Show Master Security in Settings
+                const masterSettings = document.getElementById('master-settings-card');
+                if (masterSettings) masterSettings.style.display = isMaster ? 'block' : 'none';
+
+                const resetBtn = document.getElementById('btn-reset-db');
+                if (resetBtn) resetBtn.style.display = isMaster ? 'block' : 'none';
+
+                const exportBtn = document.getElementById('btn-export-db');
+                if (exportBtn) exportBtn.style.display = (perms.backup || isMaster) ? 'block' : 'none';
+
+                const importBox = document.getElementById('box-import-db');
+                if (importBox) importBox.style.display = (perms.backup || isMaster) ? 'block' : 'none';
+
+                // Initial Data Load
+                renderAll();
+            },
+
+            // Password Recovery
+            toggleForgotPassView(show) {
+                document.getElementById('login-view').style.display = show ? 'none' : 'block';
+                document.getElementById('forgot-view').style.display = show ? 'block' : 'none';
+                document.getElementById('signup-view').style.display = 'none';
+                document.getElementById('login-bottom-links').style.display = show ? 'none' : 'block';
+                document.getElementById('login-error').style.display = 'none';
+            },
+
+            toggleSignupView(show) {
+                document.getElementById('login-view').style.display = show ? 'none' : 'block';
+                document.getElementById('signup-view').style.display = show ? 'block' : 'none';
+                document.getElementById('forgot-view').style.display = 'none';
+                document.getElementById('login-bottom-links').style.display = show ? 'none' : 'block';
+                document.getElementById('login-error').style.display = 'none';
+            },
+
+            requestPasswordReset() {
+                const u = document.getElementById('recovery-user').value.trim();
+                // Fix: Removed duplicate check
+                if (!u) return showToast("Please enter your username", "error");
+
+                // Check if user exists (V2 logic)
+                const exists = state.users.find(usr => usr.user.toLowerCase() === u.toLowerCase()) ||
+                    (u.toLowerCase() === this.master.user.toLowerCase());
+
+                if (!exists) return showToast("User not found!", "error");
+
+                // Check if already requested
+                if (state.passRequests.find(r => r.user.toLowerCase() === u.toLowerCase())) {
+                    return showToast("Request already sent! Please wait for Master approval.", "warning");
+                }
+
+                state.passRequests.push({ user: u, time: new Date().toLocaleString() });
+                this.savePassReqs();
+                showToast("Request sent! Please ask the Master to approve your reset.", "info");
+                this.toggleForgotPassView(false);
+                document.getElementById('recovery-user').value = '';
+            },
+
+            grantReset(reqUser) {
+                const newPass = Math.floor(1000 + Math.random() * 9000).toString(); // 4 digit pin
+                const userIdx = state.users.findIndex(u => u.user === reqUser);
+
+                if (userIdx !== -1) {
+                    state.users[userIdx].pass = newPass;
+                    this.saveUsers();
+                } else if (reqUser.toLowerCase() === this.master.user.toLowerCase()) {
+                    // Update LocalStorage for Master
+                    localStorage.setItem('udt_master_pass_v2', newPass);
+                    this.master.pass = newPass;
+                }
+
+                this.denyReset(reqUser, false); // Remove request
+                // Use Custom Alert for this sensitive info
+                showAlert(`Password for ${reqUser} has been reset to: ${newPass}`, "Password Reset Successful", "warning");
+                this.renderUserList();
+            },
+
+            denyReset(reqUser, confirmReq = true) {
+                if (confirmReq) {
+                    showConfirm(`Deny password reset for ${reqUser}?`, () => {
+                        state.passRequests = state.passRequests.filter(r => r.user !== reqUser);
+                        this.savePassReqs();
+                        this.renderUserList();
+                        this.applyAuth();
+                        showToast("Request Denied", "info");
+                    });
+                    return;
+                }
+                state.passRequests = state.passRequests.filter(r => r.user !== reqUser);
+                this.savePassReqs();
+                this.renderUserList();
+                this.applyAuth();
+            },
+
+            // Signup Request Handling
+            handleSignup(u, p) {
+                if (!u || !p) return showAlert("Please enter both username and password", "Error", "error");
+
+                // Check existing
+                if (state.users.find(usr => usr.user.toLowerCase() === u.toLowerCase()) ||
+                    u.toLowerCase() === this.master.user.toLowerCase()) {
+                    return showAlert("Username already exists!", "Signup Error", "error");
+                }
+
+                if (state.signupRequests.find(r => r.user.toLowerCase() === u.toLowerCase())) {
+                    return showAlert("Request already pending approval!", "Signup Error", "warning");
+                }
+
+                state.signupRequests.push({
+                    user: u,
+                    pass: p,
+                    time: new Date().toLocaleString()
+                });
+                this.saveSignupReqs();
+                this.saveSignupReqs();
+                showAlert("Signup request sent! Please wait for Master approval.", "Request Sent", "success");
+                this.toggleSignupView(false);
+            },
+
+            approveSignup(reqUser) {
+                const req = state.signupRequests.find(r => r.user === reqUser);
+                if (!req) return;
+
+                // Open Profile Modal instead of prompt for better UX
+                this.openUserProfile(req.user, req.pass, true);
+            },
+
+            openUserProfile(uName, pass = '', isNew = false) {
+                const user = state.users.find(u => u.user === uName);
+                const isSignup = !user && isNew;
+
+                document.getElementById('profile-title').innerText = isSignup ? `Approve User: ${uName}` : `Edit User: ${uName}`;
+                document.getElementById('prof-user').value = uName;
+                document.getElementById('prof-pass').value = user ? user.pass : pass;
+                document.getElementById('prof-role').value = user ? (user.role || 'Worker') : 'Worker';
+
+                // Permissions
+                const perms = (user && user.permissions) ? user.permissions : { add: true, edit: false, delete: false, reports: false, limits: false, backup: false };
+                document.getElementById('p-add').checked = !!perms.add;
+                document.getElementById('p-edit').checked = !!perms.edit;
+                document.getElementById('p-delete').checked = !!perms.delete;
+                document.getElementById('p-reports').checked = !!perms.reports;
+                document.getElementById('p-limits').checked = !!perms.limits;
+                document.getElementById('p-backup').checked = !!perms.backup;
+
+                document.getElementById('userProfileModal').style.display = 'flex';
+                // Close the main user modal if open to avoid overlap confusion
+                if (!isSignup) document.getElementById('userModal').style.display = 'none';
+            },
+
+            applyRoleDefaults() {
+                const role = document.getElementById('prof-role').value;
+                const defaults = {
+                    'Owner': { add: true, edit: true, delete: true, reports: true, limits: true, backup: true },
+                    'Worker': { add: true, edit: false, delete: false, reports: false, limits: false, backup: false },
+                    'Guest': { add: false, edit: false, delete: false, reports: true, limits: false, backup: false }
+                };
+                const perms = defaults[role] || defaults['Guest'];
+                document.getElementById('p-add').checked = perms.add;
+                document.getElementById('p-edit').checked = perms.edit;
+                document.getElementById('p-delete').checked = perms.delete;
+                document.getElementById('p-reports').checked = perms.reports;
+                document.getElementById('p-limits').checked = perms.limits;
+                document.getElementById('p-backup').checked = perms.backup;
+            },
+
+            saveUserProfile() {
+                const u = document.getElementById('prof-user').value;
+                const p = document.getElementById('prof-pass').value;
+                const r = document.getElementById('prof-role').value;
+                const perms = {
+                    add: document.getElementById('p-add').checked,
+                    edit: document.getElementById('p-edit').checked,
+                    delete: document.getElementById('p-delete').checked,
+                    reports: document.getElementById('p-reports').checked,
+                    limits: document.getElementById('p-limits').checked,
+                    backup: document.getElementById('p-backup').checked
+                };
+
+                let user = state.users.find(usr => usr.user === u);
+                if (user) {
+                    user.pass = p;
+                    user.role = r;
+                    user.permissions = perms;
+                } else {
+                    // It was a signup approval
+                    state.users.push({ user: u, pass: p, role: r, permissions: perms });
+                    state.signupRequests = state.signupRequests.filter(req => req.user !== u);
+                    this.saveSignupReqs();
+                }
+
+                this.saveUsers();
+                this.renderUserList();
+                this.applyAuth();
+
+                // Close profile and return to management list
+                document.getElementById('userProfileModal').style.display = 'none';
+                openUserModal();
+
+                showToast(`Profile updated for ${u}`);
+            },
+
+            denySignup(reqUser, confirmReq = true) {
+                if (confirmReq) {
+                    showConfirm(`Deny access for ${reqUser}?`, () => {
+                        state.signupRequests = state.signupRequests.filter(r => r.user !== reqUser);
+                        this.saveSignupReqs();
+                        this.renderUserList();
+                        this.applyAuth();
+                        showToast("Signup Denied", "info");
+                    });
+                    return;
+                }
+                state.signupRequests = state.signupRequests.filter(r => r.user !== reqUser);
+                this.saveSignupReqs();
+                this.renderUserList();
+                this.applyAuth();
+            },
+
+            saveSignupReqs() {
+                localStorage.setItem(DB_KEYS.SIGNUP_REQS, JSON.stringify(state.signupRequests));
+            },
+
+            savePassReqs() {
+                localStorage.setItem(DB_KEYS.PASS_REQS, JSON.stringify(state.passRequests));
+            },
+
+            // User Management Methods
+            addUser() {
+                const u = document.getElementById('new-u-idx').value.trim();
+                const p = document.getElementById('new-u-pass').value.trim();
+                if (!u || !p) return showToast("Please enter both username and password", "error");
+
+                if (state.users.find(usr => usr.user.toLowerCase() === u.toLowerCase())) return showToast("User already exists!", "error");
+
+                state.users.push({ user: u, pass: p, role: 'Staff' });
+                this.saveUsers();
+                this.renderUserList();
+                document.getElementById('new-u-idx').value = '';
+                document.getElementById('new-u-pass').value = '';
+            },
+
+            removeUser(uName) {
+                showConfirm(`Delete user ${uName}?`, () => {
+                    state.users = state.users.filter(usr => usr.user !== uName);
+                    this.saveUsers();
+                    this.renderUserList();
+                    showToast("User deleted", "warning");
+                }, "Delete User");
+            },
+
+            saveUsers() {
+                localStorage.setItem(DB_KEYS.USERS, JSON.stringify(state.users));
+            },
+
+            renderUserList() {
+                const container = document.getElementById('user-list-container');
+                let html = '';
+
+                // Password Recovery Requests
+                if (state.passRequests.length > 0) {
+                    html += `
+                        <div style="background:rgba(239, 68, 68, 0.05); padding:10px; border-radius:12px; margin-bottom:15px; border:1px solid rgba(239, 68, 68, 0.1);">
+                            <h4 style="margin:0 0 10px 0; color:var(--danger); display:flex; align-items:center; gap:8px;">
+                                <i class="fas fa-key"></i> Reset Requests
+                            </h4>
+                            ${state.passRequests.map(req => `
+                                <div class="user-list-item" style="border-left:3px solid var(--danger); margin-bottom:8px;">
+                                    <div style="flex:1;">
+                                        <div style="font-weight:600;">${req.user}</div>
+                                        <div style="font-size:0.75rem; color:#64748B;">${req.time}</div>
+                                    </div>
+                                    <div style="display:flex; gap:8px;">
+                                        <button onclick="auth.grantReset('${req.user}')" class="btn-submit" 
+                                            style="width:auto; padding:4px 10px; background:var(--primary); font-size:0.75rem;">Grant</button>
+                                        <button onclick="auth.denyReset('${req.user}')" 
+                                            style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="fas fa-times"></i></button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                // Signup Requests
+                if (state.signupRequests.length > 0) {
+                    html += `
+                        <div style="background:rgba(236, 72, 153, 0.05); padding:10px; border-radius:12px; margin-bottom:15px; border:1px solid rgba(236, 72, 153, 0.1);">
+                            <h4 style="margin:0 0 10px 0; color:var(--primary); display:flex; align-items:center; gap:8px;">
+                                <i class="fas fa-user-plus"></i> Signup Requests
+                            </h4>
+                            ${state.signupRequests.map(req => `
+                                <div class="user-list-item" style="border-left:3px solid var(--primary); margin-bottom:8px;">
+                                    <div style="flex:1;">
+                                        <div style="font-weight:600;">${req.user}</div>
+                                        <div style="font-size:0.75rem; color:#64748B;">Pass: <span style="background:#eee; padding:2px 4px; border-radius:4px;">${req.pass}</span></div>
+                                    </div>
+                                    <div style="display:flex; gap:8px;">
+                                        <button onclick="auth.approveSignup('${req.user}')" class="btn-submit" 
+                                            style="width:auto; padding:4px 10px; background:var(--primary); font-size:0.75rem;">Approve</button>
+                                        <button onclick="auth.denySignup('${req.user}')" 
+                                            style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="fas fa-times"></i></button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                html += state.users.map(usr => `
+                    <div class="user-list-item" onclick="auth.openUserProfile('${usr.user}')" style="cursor:pointer;">
+                        <div style="flex:1;">
+                            <div style="font-weight:600;">${usr.user} <span style="font-weight:normal; font-size:0.8rem; color:var(--primary);">(${usr.role || 'Worker'})</span></div>
+                            <div style="font-size:0.75rem; color:#64748B;">Password: <span style="font-family:monospace; background:#f1f5f9; padding:2px 6px; border-radius:4px;">${usr.pass}</span></div>
+                        </div>
+                        <button onclick="event.stopPropagation(); auth.removeUser('${usr.user}')" style="background:#fee; color:red; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `).join('');
+
+                if (state.users.length === 0 && state.passRequests.length === 0 && state.signupRequests.length === 0) {
+                    html = '<div style="color:#cbd5e1; text-align:center; padding:10px;">No users or requests.</div>';
+                }
+
+                container.innerHTML = html;
+            }
+        };
+
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            let icon = 'fa-check-circle';
+            if (type === 'error') icon = 'fa-times-circle';
+            if (type === 'warning') icon = 'fa-exclamation-circle';
+
+            toast.innerHTML = `<i class="fas ${icon}"></i> <span>${msg}</span>`;
+            container.appendChild(toast);
+
+            // Trigger animation
+            setTimeout(() => toast.classList.add('show'), 10);
+
+            // Remove after 3s
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- CUSTOM MODAL HELPERS ---
+        let confirmCallback = null;
+
+        function showAlert(msg, title = "Notice", type = "info") {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-msg').innerText = msg;
+
+            const iconBox = document.getElementById('alert-icon');
+            if (type === 'error') {
+                iconBox.style.color = 'var(--danger)';
+                iconBox.innerHTML = '<i class="fas fa-times-circle"></i>';
+            } else if (type === 'success') {
+                iconBox.style.color = '#10b981';
+                iconBox.innerHTML = '<i class="fas fa-check-circle"></i>';
+            } else {
+                iconBox.style.color = 'var(--primary)';
+                iconBox.innerHTML = '<i class="fas fa-info-circle"></i>';
+            }
+
+            document.getElementById('customAlertModal').style.display = 'flex';
+        }
+
+        function closeCustomAlert() {
+            document.getElementById('customAlertModal').style.display = 'none';
+        }
+
+        function showConfirm(msg, callback, title = "Confirm Action", showInput = false, defaultInput = "") {
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-msg').innerText = msg;
+            confirmCallback = callback;
+
+            const inputContainer = document.getElementById('confirm-input-container');
+            const inputField = document.getElementById('confirm-input');
+
+            if (showInput) {
+                inputContainer.style.display = 'block';
+                inputField.value = defaultInput;
+                inputField.focus();
+            } else {
+                inputContainer.style.display = 'none';
+            }
+
+            document.getElementById('customConfirmModal').style.display = 'flex';
+        }
+
+        document.getElementById('btn-confirm-ok').addEventListener('click', () => {
+            const inputVal = document.getElementById('confirm-input').value;
+            if (confirmCallback) confirmCallback(inputVal);
+            document.getElementById('customConfirmModal').style.display = 'none';
+        });
+
+        document.getElementById('btn-confirm-cancel').addEventListener('click', () => {
+            document.getElementById('customConfirmModal').style.display = 'none';
+        });
+
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Data Migration for Catalog (Phase 2 -> Phase 3)
+            let migrated = false;
+            Object.entries(state.catalog).forEach(([prod, items]) => {
+                if (Array.isArray(items) && items.length > 0 && typeof items[0] === 'string') {
+                    state.catalog[prod] = items.map(s => ({ size: s, price: 0 }));
+                    migrated = true;
+                }
+            });
+            if (migrated) localStorage.setItem(DB_KEYS.CATALOG, JSON.stringify(state.catalog));
+
+            // Data Migration for Datasets (Phase 4 -> Phase 5)
+            if (state.transactions.length > 0) {
+                state.sales = state.transactions.filter(t => t.type === 'sell');
+                state.purchases = state.transactions.filter(t => t.type === 'buy');
+
+                localStorage.setItem(DB_KEYS.SALES, JSON.stringify(state.sales));
+                localStorage.setItem(DB_KEYS.PURCHASE, JSON.stringify(state.purchases));
+
+                // Clear old key but keep array empty for now to avoid re-migration
+                state.transactions = [];
+                localStorage.removeItem(DB_KEYS.TX);
+                showToast("Data migrated to separate Sales/Purchase datasets.");
+            }
+
+            // Catalog Migration (v2 -> v3 separate catalogs)
+            if (Object.keys(state.catalog).length > 0 &&
+                localStorage.getItem(DB_KEYS.CATALOG_SALES) === null) {
+
+                // Copy existing catalog to Sales (Standard Blocks/Rings)
+                state.catalogSales = JSON.parse(JSON.stringify(state.catalog));
+                localStorage.setItem(DB_KEYS.CATALOG_SALES, JSON.stringify(state.catalogSales));
+
+                // Keep the default Purchase catalog (Dust/Jalli/Cement)
+                localStorage.setItem(DB_KEYS.CATALOG_PURCHASE, JSON.stringify(state.catalogPurchase));
+
+                // Clear old key
+                localStorage.removeItem(DB_KEYS.CATALOG);
+                state.catalog = {};
+                showToast("Catalogs separated for Sales and Purchases.");
+            }
+
+            auth.init();
+            document.getElementById('t-date').valueAsDate = new Date();
+
+            // Login Listener
+            document.getElementById('loginForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const u = document.getElementById('login-user').value.trim();
+                const p = document.getElementById('login-pass').value.trim();
+                const result = auth.login(u, p); // Now returns Object
+                if (!result.success) {
+                    const errBox = document.getElementById('login-error');
+                    errBox.style.display = 'block';
+                    errBox.innerText = result.msg;
+                }
+            });
+
+            // Signup Listener
+            document.getElementById('signupForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const u = document.getElementById('signup-user').value.trim();
+                const p = document.getElementById('signup-pass').value.trim();
+                auth.handleSignup(u, p);
+            });
+
+
+
+            // Initial Dashboard Mode
+            setDashMode('sales');
+
+            // Set up status change listener for settlement fields
+            toggleSettlementFields();
+        });
+
+        function renderAll() {
+            renderDashboard();
+            renderSalesTable();
+            renderInventory();
+            renderCustomers();
+            updateFormDropdowns();
+            catalog.render();
+        }
+
+        // --- SETTINGS & DATA MANAGEMENT ---
+        function exportDB() {
+            const perms = auth.currentUser ? auth.currentUser.permissions : {};
+            const isMaster = auth.currentUser && auth.currentUser.role === 'Master';
+            if (!isMaster && !perms.backup) return showToast("Permission Denied: Backup access required", "error");
+
+            const data = {};
+            Object.values(DB_KEYS).forEach(key => {
+                const val = localStorage.getItem(key);
+                if (val) data[key] = val;
+            });
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `UHB_Backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link); // Required for some browsers
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url); // Clean up memory
+            showToast("Backup exported successfully!");
+        }
+
+        function importDB(input) {
+            const perms = auth.currentUser ? auth.currentUser.permissions : {};
+            const isMaster = auth.currentUser && auth.currentUser.role === 'Master';
+            if (!isMaster && !perms.backup) return showToast("Permission Denied: Restore access required", "error");
+
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    showConfirm("This will overwrite all current data. Are you sure?", () => {
+                        // Clear existing UDT keys before restore to ensure a clean state
+                        Object.values(DB_KEYS).forEach(key => localStorage.removeItem(key));
+
+                        Object.entries(data).forEach(([key, value]) => {
+                            if (value) localStorage.setItem(key, value);
+                        });
+                        showToast("Data restored! Reloading...");
+                        setTimeout(() => location.reload(), 1500);
+                    }, "Restore Database");
+
+                } catch (err) {
+                    showToast("Invalid backup file", "error");
+                }
+            };
+            reader.readAsText(file);
+            input.value = ''; // Reset input to allow re-uploading the same file
+        }
+
+        function resetDB() {
+            if (auth.currentUser?.role !== 'Master') return showToast("Master Access Required!", "error");
+            showConfirm("CRITICAL WARNING: This will PERMANENTLY delete all transactions, customers, and catalog data. Proceed only if you have a backup. Continue?", () => {
+                // Double Confirm
+                showConfirm("LAST CHANCE: Are you absolutely sure? This cannot be undone.", () => {
+                    Object.values(DB_KEYS).forEach(key => localStorage.removeItem(key));
+                    showToast("Database Reset! Reloading...");
+                    setTimeout(() => location.reload(), 1500);
+                }, "CONFIRM WIPE");
+            }, "Factory Reset");
+        }
+
+        function changeMasterPass() {
+            const newPass = document.getElementById('new-master-pass').value.trim();
+            if (!newPass) return showToast("Password cannot be empty", "error");
+
+            showConfirm("Change Master Password? You will be logged out.", () => {
+                // In this V2 implementation, we'll store the master pass in localStorage if it's changed
+                localStorage.setItem('udt_master_pass_v2', newPass);
+                showToast("Password updated! Logging out...");
+                setTimeout(() => auth.logout(), 1500);
+            }, "Update Security");
+        }
+
+        // --- CATALOG MANAGEMENT ---
+        const catalog = {
+            activeMgrMode: 'sales',
+
+            setMgrMode(mode) {
+                this.activeMgrMode = mode;
+                const sBtn = document.getElementById('mgr-cat-sales');
+                const bBtn = document.getElementById('mgr-cat-buy');
+                if (mode === 'sales') {
+                    sBtn.style.background = 'white'; sBtn.style.color = 'var(--primary)'; sBtn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                    bBtn.style.background = 'transparent'; bBtn.style.color = '#64748B'; bBtn.style.boxShadow = 'none';
+                } else {
+                    bBtn.style.background = 'white'; bBtn.style.color = '#10b981'; bBtn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                    sBtn.style.background = 'transparent'; sBtn.style.color = '#64748B'; sBtn.style.boxShadow = 'none';
+                }
+                this.render();
+            },
+
+            render() {
+                const container = document.getElementById('catalog-list');
+                if (!container) return;
+
+                const activeCatalog = getCatalog(this.activeMgrMode);
+
+                let html = `
+                    <table style="width:100%; border-collapse:collapse; background:white; border-radius:12px; overflow:hidden; font-size:0.9rem;">
+                        <thead style="background:#f8fafc; text-align:left;">
+                            <tr>
+                                <th style="padding:12px; border-bottom:1px solid #e2e8f0;">Product</th>
+                                <th style="padding:12px; border-bottom:1px solid #e2e8f0;">Size</th>
+                                <th style="padding:12px; border-bottom:1px solid #e2e8f0;">Price (₹)</th>
+                                <th style="padding:12px; border-bottom:1px solid #e2e8f0; text-align:right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                const canEditCatalog = auth.currentUser && (auth.currentUser.role === 'Master' || (auth.currentUser.permissions && auth.currentUser.permissions.limits));
+
+                let count = 0;
+                Object.entries(activeCatalog).forEach(([prod, items]) => {
+                    if (!Array.isArray(items)) return;
+
+                    items.forEach((item, idx) => {
+                        if (!item || typeof item !== 'object') return; // Ensure item is an object
+                        count++;
+                        html += `
+                            <tr>
+                                <td style="padding:12px; border-bottom:1px solid #f1f5f9; font-weight:600; color:var(--primary);">${prod}</td>
+                                <td style="padding:12px; border-bottom:1px solid #f1f5f9;">${item.size || 'N/A'}</td>
+                                <td style="padding:12px; border-bottom:1px solid #f1f5f9;">
+                                    <input type="number" value="${item.price || 0}" 
+                                        onchange="catalog.updatePrice('${prod}', '${item.size}', this.value)"
+                                        ${!canEditCatalog ? 'disabled' : ''}
+                                        style="width:70px; padding:4px; border:1px solid #ddd; border-radius:4px; ${!canEditCatalog ? 'background:#f8fafc; border:none;' : ''}">
+                                </td>
+                                <td style="padding:12px; border-bottom:1px solid #f1f5f9; text-align:right;">
+                                    ${canEditCatalog ? `<i class="fas fa-trash" onclick="catalog.removeSize('${prod}', '${item.size}')" 
+                                       style="cursor:pointer; color:var(--danger); opacity:0.7;"></i>` : ''}
+                                </td>
+                            </tr>
+                        `;
+                    });
+                });
+
+                if (count === 0) {
+                    html += `<tr><td colspan="4" style="text-align:center; padding:40px; color:#94A3B8;">No items in ${this.activeMgrMode === 'sales' ? 'Sales' : 'Purchase'} catalog.</td></tr>`;
+                }
+
+                html += `</tbody></table>`;
+                container.innerHTML = html;
+            },
+
+            updatePrice(prod, size, newPrice) {
+                const canEditCatalog = auth.currentUser && (auth.currentUser.role === 'Master' || (auth.currentUser.permissions && auth.currentUser.permissions.limits));
+                if (!canEditCatalog) return showToast("Permission Denied: Catalog edit access required", "error");
+
+                const activeCatalog = getCatalog(this.activeMgrMode);
+                const item = activeCatalog[prod].find(i => i.size === size);
+                if (item) {
+                    item.price = Number(newPrice);
+                    this.save();
+                    updateValuation();
+                }
+            },
+
+            addProduct() {
+                const canEditCatalog = auth.currentUser && (auth.currentUser.role === 'Master' || (auth.currentUser.permissions && auth.currentUser.permissions.limits));
+                if (!canEditCatalog) return showToast("Permission Denied: Catalog edit access required", "error");
+
+                const name = document.getElementById('new-prod-name').value.trim();
+                const size = document.getElementById('new-prod-size').value.trim();
+                const price = Number(document.getElementById('new-prod-price').value) || 0;
+
+                if (!name || !size) return showToast("Product name and Size are required", "warning");
+
+                const activeCatalog = getCatalog(this.activeMgrMode);
+                if (!activeCatalog[name]) activeCatalog[name] = [];
+
+                if (activeCatalog[name].some(i => i.size === size)) {
+                    return showToast("Size already exists for this product", "warning");
+                }
+
+                activeCatalog[name].push({ size: size, price: price });
+                this.save();
+
+                document.getElementById('new-prod-name').value = '';
+                document.getElementById('new-prod-size').value = '';
+                document.getElementById('new-prod-price').value = '';
+
+                this.render();
+                updateFormDropdowns();
+                renderInventory();
+                showToast("Item added successfully!");
+            },
+
+            removeSize(prod, size) {
+                const canEditCatalog = auth.currentUser && (auth.currentUser.role === 'Master' || (auth.currentUser.permissions && auth.currentUser.permissions.limits));
+                if (!canEditCatalog) return showToast("Permission Denied: Catalog edit access required", "error");
+
+                const activeCatalog = getCatalog(this.activeMgrMode);
+                if (!activeCatalog[prod]) return;
+                activeCatalog[prod] = activeCatalog[prod].filter(i => i.size !== size);
+                if (activeCatalog[prod].length === 0) delete activeCatalog[prod];
+
+                this.save();
+                this.render();
+                updateFormDropdowns();
+                renderInventory();
+            },
+
+            save() {
+                saveCatalog(this.activeMgrMode);
+            }
+        };
+
+        function openCatalogModal() {
+            document.getElementById('catalogModal').style.display = 'flex';
+            catalog.render();
+        }
+
+        function setDashMode(mode) {
+            state.dashMode = mode;
+
+            // UI Update - Global Header Toggles
+            const btnSales = document.getElementById('btn-mode-sales');
+            const btnBuy = document.getElementById('btn-mode-buy');
+
+            if (btnSales && btnBuy) {
+                if (mode === 'sales') {
+                    btnSales.style.background = 'white';
+                    btnSales.style.color = 'var(--primary)';
+                    btnSales.style.boxShadow = '0 2px 8px var(--shadow-color)';
+                    btnBuy.style.background = 'transparent';
+                    btnBuy.style.color = '#94a3b8';
+                    btnBuy.style.boxShadow = 'none';
+                } else {
+                    btnBuy.style.background = 'white';
+                    btnBuy.style.color = 'var(--primary)';
+                    btnBuy.style.boxShadow = '0 2px 8px var(--shadow-color)';
+                    btnSales.style.background = 'transparent';
+                    btnSales.style.color = '#94a3b8';
+                    btnSales.style.boxShadow = 'none';
+                }
+            }
+
+            // Background & FAB Updates - Handled by nav function now
+            // const page = document.querySelector('.main-content > .scroll-area > div:not([style*="display: none"])');
+            // const pageId = page ? page.id : '';
+
+            // document.body.classList.remove('mode-sales', 'mode-buy');
+            // if (state.currentPage === 'dashboard' || state.currentPage === 'sales') {
+            //     document.body.classList.add('mode-' + mode);
+            // }
+
+            // Re-render current page to apply mode-specific styles
+            nav(state.currentPage);
+        }
+
+        function openModalWithMode() {
+            const defaultType = state.dashMode === 'buy' ? 'buy' : 'sell';
+
+            // Set dynamic title and hidden type field
+            document.getElementById('tx-title').innerText = defaultType === 'sell' ? 'Sales Entry' : 'Purchase Entry';
+            document.getElementById('t-type').value = defaultType;
+
+            // Reset Form for New Entry
+            const form = document.getElementById('txForm');
+            form.reset();
+            delete form.dataset.editId;
+            document.getElementById('t-date').valueAsDate = new Date();
+            document.getElementById('t-amount').value = "";
+            document.getElementById('t-status').value = "purchased";
+
+            updateFormDropdowns();
+            openModal(); // Standard open
+        }
+
+        // --- DASHBOARD ---
+        function renderDashboard() {
+            // 1. Filter Data based on Filters
+            state.dateFilter = document.getElementById('date-filter').value;
+            const now = new Date();
+            const txList = getTransactions();
+            const filteredTx = txList.filter(t => {
+                // Date Filter
+                const tDate = new Date(t.date);
+                const diffTime = Math.abs(now - tDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                if (state.dateFilter === 'daily' && diffDays > 1) return false;
+                if (state.dateFilter === 'weekly' && diffDays > 7) return false;
+                if (state.dateFilter === 'monthly' && diffDays > 30) return false;
+                if (state.dateFilter === '6months' && diffDays > 180) return false;
+                if (state.dateFilter === '1year' && diffDays > 365) return false;
+                if (state.dateFilter === '3years' && diffDays > 1095) return false;
+
+                return true;
+            });
+
+            // Make sure we have labels for empty stats
+            const modeColor = getComputedStyle(document.body).getPropertyValue('--primary').trim();
+            const modeLabel = state.dashMode === 'buy' ? 'Purchases' : 'Sales';
+
+            document.getElementById('val-total-label').innerText = `Total ${modeLabel} (Monthly)`;
+            document.getElementById('val-total-label').style.color = modeColor;
+            document.getElementById('val-total-icon').style.color = modeColor;
+            document.getElementById('val-stock-icon').style.color = modeColor;
+            // Update Stat Label
+            document.querySelector('.stat-card .stat-label').innerText = `Total ${modeLabel} (${state.dateFilter})`;
+
+            // Stats
+            document.getElementById('val-total').innerText = filteredTx.length;
+
+            // Charts using FILTERED data
+            const ctxLine = document.getElementById('mainChart').getContext('2d');
+            const dateMap = {};
+            // Sort by date for chart
+            filteredTx.sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(t => {
+                dateMap[t.date] = (dateMap[t.date] || 0) + 1;
+            });
+            const labels = Object.keys(dateMap); // All dates in range
+            const data = Object.values(dateMap);
+
+            if (window.myLine) window.myLine.destroy();
+            const colors = state.dashMode === 'sell' || state.dashMode === 'sales' ?
+                { border: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' } :
+                { border: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' };
+
+            const chartData = {
+                labels: labels,
+                datasets: [{
+                    label: state.dashMode === 'buy' ? 'Purchases (₹)' : 'Sales (₹)',
+                    data: filteredTx.map(d => Number(d.amount) || 0), // Use amount for line chart
+                    borderColor: colors.border,
+                    backgroundColor: colors.bg,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: colors.border,
+                    pointRadius: 4
+                }]
+            };
+
+            window.myLine = new Chart(ctxLine, {
+                type: 'line',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false },
+                            ticks: { font: { size: 10 } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+
+            const ctxPie = document.getElementById('pieChart').getContext('2d');
+            const prodMap = {};
+            filteredTx.forEach(t => { prodMap[t.product] = (prodMap[t.product] || 0) + Number(t.qty); });
+
+            if (window.myPie) window.myPie.destroy();
+            const labelsPie = Object.keys(prodMap);
+            const dataPie = Object.values(prodMap);
+            const pieColors = state.dashMode === 'buy' ?
+                ['#ef4444', '#f87171', '#fca5a5', '#fecaca', '#fee2e2'] :
+                ['#10b981', '#34d399', '#6ee7b7', '#a7f3d0', '#d1fae5'];
+
+            window.myPie = new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: labelsPie,
+                    datasets: [{
+                        data: dataPie,
+                        backgroundColor: pieColors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right' }
+                    }
+                }
+            });
+
+            // Recent Table
+            document.getElementById('recent-table-body').innerHTML = filteredTx.slice(0, 5).map(t => {
+                const data = state.traders[t.name];
+                const contact = (typeof data === 'object') ? data.contact : (data || 'N/A');
+                return `
+                <tr>
+                    <td>${t.date}</td>
+                    <td><span class="badge ${t.type === 'sell' ? 'badge-sell' : 'badge-buy'}">${t.type.toUpperCase()}</span></td>
+                    <td>${t.name}</td>
+                    <td>${contact}</td>
+                    <td>${t.product}</td>
+                    <td>${t.qty}</td>
+                    <td style="font-weight:700;">₹${(Number(t.amount) || 0).toLocaleString()}</td>
+                    <td><span class="badge ${t.status === 'purchased' ? 'badge-buy' : 'badge-info'}">${(t.status || 'purchased').toUpperCase()}</span></td>
+                </tr>
+            `}).join('');
+
+            // Update Stock Valuation (Phase 2)
+            updateValuation();
+
+            // Settlement Reminders (Phase 4)
+            renderReminders();
+        }
+
+        function renderReminders() {
+            const today = new Date().toISOString().split('T')[0];
+            // Check both datasets for reminders
+            const reminders = [...state.sales, ...state.purchases].filter(t =>
+                t.status === 'booked' && t.promiseDate === today
+            );
+
+            const card = document.getElementById('reminders-card');
+            const list = document.getElementById('reminder-list');
+            const count = document.getElementById('reminder-count');
+
+            if (reminders.length > 0) {
+                card.style.display = 'block';
+                count.innerText = reminders.length;
+                list.innerHTML = reminders.map(t => {
+                    const balance = (Number(t.amount) || 0) - (Number(t.paidAmount) || 0);
+                    // Gate Pay button: Master or perms.edit
+                    const canEdit = auth.currentUser && (auth.currentUser.role === 'Master' || (auth.currentUser.permissions && auth.currentUser.permissions.edit));
+                    const payBtn = canEdit ? `<button onclick="editTx(${t.id})" style="background:var(--accent); color:white; border:none; padding:2px 8px; border-radius:4px; font-size:0.7rem; cursor:pointer;">Pay</button>` : '';
+
+                    return `
+                        <div style="background:white; padding:10px 15px; border-radius:10px; border:1px solid #fed7aa; display:flex; flex-direction:column; gap:4px; min-width:200px;">
+                            <div style="font-weight:700; color:var(--dark); font-size:0.85rem;">${t.name}</div>
+                            <div style="font-size:0.75rem; color:#64748B;">${t.product} (${t.size})</div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
+                                <span style="font-size:0.8rem; font-weight:700; color:var(--accent);">Due: ₹${balance.toLocaleString()}</span>
+                                ${payBtn}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                card.style.display = 'none';
+            }
+        }
+
+        function updateValuation() {
+            // Valuation Stock logic
+            const currentStock = calculateStock();
+            const activeCatalog = getCatalog();
+            let totalVal = 0;
+
+            Object.entries(currentStock).forEach(([key, qty]) => {
+                const [prod, size] = key.split('-');
+                const variants = activeCatalog[prod] || [];
+                const v = variants.find(v => v.size === size);
+                if (v && qty > 0) totalVal += (v.price * qty);
+            });
+            document.getElementById('val-stock-est').innerText = "₹" + totalVal.toLocaleString();
+        }
+
+        // --- INVENTORY LOGIC ---
+        function calculateStock(prod, size) {
+            let total = 0;
+            getAllTx().forEach(t => {
+                if (t.product === prod && t.size === size) {
+                    if (t.type === 'buy') total += Number(t.qty);
+                    if (t.type === 'sell') total -= Number(t.qty);
+                }
+            });
+            return total;
+        }
+
+        function renderInventory() {
+            const grid = document.getElementById('inventory-grid');
+            if (!grid) return;
+
+            let html = '';
+            let hasAlert = false;
+            const activeCatalog = getCatalog();
+
+            Object.entries(activeCatalog).forEach(([prod, items]) => {
+                if (!Array.isArray(items)) return;
+
+                items.forEach(item => {
+                    if (!item || typeof item !== 'object') return;
+
+                    const size = item.size || 'N/A';
+                    const stock = calculateStock(prod, size);
+
+                    // Threshold Logic
+                    const key = `${prod}-${size}`;
+                    const limit = state.thresholds[key] !== undefined ? state.thresholds[key] : 50;
+
+                    const isLow = stock < limit;
+                    if (isLow) hasAlert = true;
+
+                    // Button for Master to set Limit
+                    const canSetLimit = auth.currentUser && (auth.currentUser.role === 'Master' || (auth.currentUser.permissions && auth.currentUser.permissions.limit));
+                    const limitDisplay = canSetLimit
+                        ? `<button class="badge" onclick="setLimit('${prod}', '${size}')" 
+                               style="background:#f1f5f9; color:#64748B; border:none; cursor:pointer; font-size:0.7rem; padding:4px 8px; font-weight:700;">Set Limit (${limit})</button>`
+                        : `<span style="font-size:0.7rem; color:#94A3B8; font-weight:700;">Limit: ${limit}</span>`;
+
+                    html += `
+                        <div class="card inventory-card" style="border-left:5px solid ${isLow ? 'var(--danger)' : 'var(--primary)'}; transition: 0.3s; padding:20px;">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+                                <div style="font-size:0.75rem; color:#64748B; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">${prod}</div>
+                                ${limitDisplay}
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div style="font-size:1.2rem; font-weight:700; color:var(--dark);">${size}</div>
+                                <div style="font-size:0.85rem; color:#64748B; font-weight:700;">₹${item.price || 0}</div>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:10px;">
+                                <div style="font-size:2.5rem; font-weight:800; color:${isLow ? 'var(--danger)' : 'var(--dark)'};">${stock}</div>
+                                <div style="font-size:0.85rem; color:${isLow ? 'var(--danger)' : '#10b981'}; font-weight:600;">
+                                    ${isLow ? '<i class="fas fa-exclamation-circle"></i> Low Stock' : '<i class="fas fa-check-circle"></i> In Stock'}
+                                </div>
+                            </div>
+                            <div style="margin-top:15px; border-top:1px solid #f1f5f9; padding-top:15px; text-align:right;">
+                                <button onclick="openLedger('${prod}', '${size}')" 
+                                   style="background:none; border:none; color:var(--primary); text-decoration:none; font-size:0.85rem; font-weight:700; cursor:pointer; padding:0;">View Ledger &rarr;</button>
+                            </div>
+                        </div>
+                        `;
+                });
+            });
+
+            // Add New Product Placeholder Card (Master or Limit Permission)
+            if (auth.currentUser && (auth.currentUser.role === 'Master' || (auth.currentUser.permissions && auth.currentUser.permissions.limits))) {
+                html += `
+                            <div class="card inventory-card" onclick="openCatalogModal()" 
+                                style="border:2px dashed #E2E8F0; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; background:rgba(248, 250, 252, 0.5); min-height:180px; transition:0.3s;">
+                                <i class="fas fa-plus-circle" style="font-size:2rem; color:#94A3B8; margin-bottom:12px;"></i>
+                                <div style="font-weight:700; color:#475569;">Add New Product</div>
+                                <div style="font-size:0.75rem; color:#94A3B8;">Update Catalog</div>
+                            </div>
+                            `;
+            }
+
+            grid.innerHTML = html;
+            document.getElementById('inv-alert-dot').style.display = hasAlert ? 'block' : 'none';
+        }
+
+        function openLedger(prod, size) {
+            document.getElementById('ledger-title-prod').innerText = prod;
+            document.getElementById('ledger-title-size').innerText = size;
+
+            const history = getAllTx()
+                .filter(t => t.product === prod && t.size === size)
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            let runningStock = 0;
+            const body = document.getElementById('ledger-body');
+            body.innerHTML = history.map(t => {
+                if (t.type === 'buy') runningStock += Number(t.qty);
+                else runningStock -= Number(t.qty);
+
+                return `
+                        <tr>
+                        <td>${t.date}</td>
+                        <td><span class="badge ${t.type === 'sell' ? 'badge-sell' : 'badge-buy'}">${t.type.toUpperCase()}</span></td>
+                        <td>${t.name}</td>
+                        <td style="font-weight:700; color:${t.type === 'buy' ? '#059669' : 'var(--primary)'}">${t.type === 'buy' ? '+' : '-'}${t.qty}</td>
+                        <td style="font-weight:700;">${runningStock}</td>
+                    </tr>
+                        `;
+            }).reverse().join(''); // Show latest on top
+
+            if (history.length === 0) {
+                body.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:#94A3B8;">No transaction history for this item.</td></tr>';
+            }
+
+            document.getElementById('ledgerModal').style.display = 'flex';
+        }
+
+        function setLimit(prod, size) {
+            const isMaster = auth.currentUser && auth.currentUser.role === 'Master';
+            const perms = auth.currentUser ? auth.currentUser.permissions : {};
+            if (!isMaster && !perms.limits) return showToast("Permission Denied: Stock Limit access required", "error");
+
+            showConfirm(`Set low stock warning limit for ${prod}(${size}):`, (val) => {
+                if (val !== null) {
+                    const lim = parseInt(val);
+                    if (!isNaN(lim)) {
+                        state.thresholds[`${prod}-${size}`] = lim;
+                        localStorage.setItem(DB_KEYS.THRESHOLDS, JSON.stringify(state.thresholds));
+                        renderInventory();
+                    } else {
+                        showToast("Invalid number entered", "error");
+                    }
+                }
+            }, "Set Stock Limit", true, "50");
+        }
+
+        // --- CUSTOMER LOGIC ---
+        function renderCustomers() {
+            const body = document.getElementById('customer-table-body');
+            const perms = auth.currentUser ? auth.currentUser.permissions : {};
+            const isMaster = auth.currentUser && auth.currentUser.role === 'Master';
+
+            let html = '';
+            Object.entries(state.traders).forEach(([name, data]) => {
+                const contact = (typeof data === 'object') ? data.contact : (data || 'N/A');
+                const type = (typeof data === 'object') ? data.type : (getAllTx().some(t => t.name === name && t.type === 'buy') ? 'Dealer' : 'Customer');
+                const typeLabel = type === 'Dealer' ? '<span style="color:var(--secondary);">Dealer</span>' : 'Customer';
+
+                html += `
+                    <tr onclick="openCustPortal('${name}')" style="cursor:pointer;">
+                        <td><b>${name}</b></td>
+                        <td>${contact}</td>
+                        <td>${typeLabel}</td>
+                        <td style="text-align:right;">
+                            <div style="display:inline-flex; gap:10px;" onclick="event.stopPropagation()">
+                                ${(isMaster || perms.edit) ? `<button style="color:var(--secondary); border:none; background:none; cursor:pointer;" onclick="editCust('${name}')">✏️</button>` : ''}
+                                ${(isMaster || perms.delete) ? `<button style="color:var(--danger); border:none; background:none; cursor:pointer;" onclick="deleteCust('${name}')">🗑️</button>` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            body.innerHTML = html || '<tr><td colspan="4" style="text-align:center; padding:20px; color:#94A3B8;">No customers yet.</td></tr>';
+        }
+
+        function openCustPortal(name) {
+            const data = state.traders[name];
+            const contact = (typeof data === 'object') ? data.contact : (data || 'No contact');
+            const history = getAllTx().filter(t => t.name === name);
+
+            document.getElementById('portal-cust-name').innerText = name;
+            document.getElementById('portal-cust-contact').innerText = contact;
+
+            document.getElementById('portal-total-orders').innerText = history.length;
+            document.getElementById('portal-stock-in').innerText = history.filter(t => t.type === 'buy').length;
+
+            // Total Balance (Total Sell Amt - Total Buy Amt)
+            let bal = 0;
+            history.forEach(t => {
+                const amt = Number(t.amount) || 0;
+                if (t.type === 'sell') bal += amt;
+                else bal -= amt;
+            });
+            document.getElementById('portal-balance').innerText = "₹" + bal.toLocaleString();
+
+            const body = document.getElementById('portal-history-body');
+            body.innerHTML = history.sort((a, b) => new Date(b.date) - new Date(a.date)).map(t => `
+                <tr>
+                    <td>${t.date}</td>
+                    <td>${t.product}</td>
+                    <td><span class="badge badge-mode">${(t.status || 'purchased').toUpperCase()}</span></td>
+                    <td><span class="badge ${t.type === 'sell' ? 'badge-sell' : 'badge-buy'}">${t.type.toUpperCase()}</span></td>
+                    <td>${t.qty}</td>
+                    <td style="font-weight:700;">₹${(Number(t.amount) || 0).toLocaleString()}</td>
+                    <td><i class="fas fa-chevron-right" style="color:#CBD5E1;"></i></td>
+                </tr>
+            `).join('');
+
+            document.getElementById('custPortalModal').style.display = 'flex';
+        }
+
+        function deleteCust(name) {
+            const isMaster = auth.currentUser && auth.currentUser.role === 'Master';
+            const perms = auth.currentUser ? auth.currentUser.permissions : {};
+            if (!isMaster && !perms.delete) return showToast("Permission Denied: Delete access required", "error");
+
+            if (confirm(`Delete ${name} from database ? `)) {
+                delete state.traders[name];
+                localStorage.setItem(DB_KEYS.TRADERS, JSON.stringify(state.traders));
+                renderAll();
+            }
+        }
+
+        function editCust(name) {
+            const isMaster = auth.currentUser && auth.currentUser.role === 'Master';
+            const perms = auth.currentUser ? auth.currentUser.permissions : {};
+            if (!isMaster && !perms.edit) return showToast("Permission Denied: Edit access required", "error");
+
+            const data = state.traders[name];
+            const contact = (typeof data === 'object') ? data.contact : (data || 'N/A');
+            const type = (typeof data === 'object') ? data.type : (getAllTx().some(t => t.name === name && t.type === 'buy') ? 'Dealer' : 'Customer');
+
+            document.getElementById('c-name').value = name;
+            document.getElementById('c-contact').value = contact;
+            document.getElementById('c-type').value = type;
+            document.getElementById('custForm').dataset.editName = name; // Store original name
+            openCustModal();
+        }
+
+        function openCustModal() {
+            const form = document.getElementById('custForm');
+            if (!form.dataset.editName) {
+                form.reset();
+                document.getElementById('c-name').value = '';
+                document.getElementById('c-contact').value = '';
+                document.getElementById('c-type').value = 'Customer';
+            }
+            document.getElementById('custModal').style.display = 'flex';
+        }
+        function openUserModal() {
+            document.getElementById('userModal').style.display = 'flex';
+            auth.renderUserList();
+        }
+
+        document.getElementById('custForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('c-name').value.trim();
+            const contact = document.getElementById('c-contact').value.trim();
+            const type = document.getElementById('c-type').value;
+            const editName = e.target.dataset.editName;
+
+            if (name) {
+                // Check for duplicates if it's a new name or rename
+                if ((!editName || editName !== name) && state.traders[name]) {
+                    return showToast("Customer already exists with this name!", "warning");
+                }
+
+                if (editName && editName !== name) {
+                    // It's a rename - delete old, update transactions in both sets
+                    delete state.traders[editName];
+                    state.sales.forEach(t => { if (t.name === editName) t.name = name; });
+                    state.purchases.forEach(t => { if (t.name === editName) t.name = name; });
+
+                    localStorage.setItem(DB_KEYS.SALES, JSON.stringify(state.sales));
+                    localStorage.setItem(DB_KEYS.PURCHASE, JSON.stringify(state.purchases));
+                }
+
+                const isUpdate = !!editName;
+                state.traders[name] = { contact: contact || 'N/A', type: type };
+
+                localStorage.setItem(DB_KEYS.TRADERS, JSON.stringify(state.traders));
+
+                showToast(isUpdate ? "Customer Updated!" : "Customer Added!");
+                closeModal('custModal');
+                delete e.target.dataset.editName;
+                renderAll();
+            }
+        });
+
+        // --- REPORTS ---
+        function generateReport(type) {
+            let csv = [];
+            let filename = '';
+
+            if (type === 'sales') {
+                csv = [['Date', 'Type', 'Customer', 'Product', 'Size', 'Qty', 'Amount', 'Status']];
+
+                // Use filtered data if we are in the Sales view, otherwise all
+                const isSalesView = document.getElementById('view-sales').style.display === 'block';
+                let dataToExport = getTransactions();
+
+                if (isSalesView) {
+                    const fDate = document.getElementById('f-date').value;
+                    const fName = document.getElementById('f-name') ? document.getElementById('f-name').value.toLowerCase() : '';
+                    const fProd = document.getElementById('f-prod') ? document.getElementById('f-prod').value : 'all';
+                    const fSize = document.getElementById('f-size') ? document.getElementById('f-size').value.toLowerCase() : '';
+                    const fStatus = document.getElementById('f-status') ? document.getElementById('f-status').value : 'all';
+
+                    dataToExport = getTransactions().filter(t => {
+                        if (fDate && t.date !== fDate) return false;
+                        if (fName && !t.name.toLowerCase().includes(fName)) return false;
+                        if (fProd !== 'all' && t.product !== fProd) return false;
+                        if (fSize && !t.size.toLowerCase().includes(fSize)) return false;
+                        if (fStatus !== 'all' && (t.status || 'purchased') !== fStatus) return false;
+                        return true;
+                    });
+                }
+
+                dataToExport.forEach(t => csv.push([t.date, t.type, t.name, t.product, t.size, t.amount || 0, t.status || 'purchased']));
+                filename = isSalesView ? 'Filtered_Sales_Report.csv' : 'Full_Sales_Report.csv';
+            } else if (type === 'stock') {
+                csv = [['Product', 'Size', 'Current Stock']];
+                const activeCatalog = getCatalog();
+                Object.entries(activeCatalog).forEach(([prod, variants]) => {
+                    variants.forEach(v => csv.push([prod, v.size, calculateStock(prod, v.size)]));
+                });
+                filename = `${state.dashMode.toUpperCase()}_Inventory_Report.csv`;
+            } else if (type === 'customers') {
+                csv = [['Name', 'Contact']];
+                Object.entries(state.traders).forEach(([n, c]) => csv.push([n, c]));
+                filename = 'Customer_List.csv';
+            }
+
+            const csvContent = "data:text/csv;charset=utf-8," + csv.map(e => e.join(",")).join("\n");
+            const link = document.createElement("a");
+            link.href = encodeURI(csvContent);
+            link.download = filename;
+            link.click();
+        }
+
+        // --- CORE UI ---
+        function nav(page) {
+            state.currentPage = page;
+            const views = ['dashboard', 'sales', 'inventory', 'customers', 'reports', 'settings'];
+            views.forEach(v => {
+                const el = document.getElementById('view-' + v);
+                if (el) el.style.display = (v === page) ? 'block' : 'none';
+            });
+
+            // Update Body Mode Class based on Page
+            document.body.classList.remove('mode-sales', 'mode-buy');
+            if (page === 'dashboard' || page === 'sales') {
+                document.body.classList.add('mode-' + state.dashMode);
+            }
+
+            // Active Nav Item
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            const activeNav = document.querySelector(`[onclick="nav('${page}')"]`);
+            if (activeNav) activeNav.classList.add('active');
+
+            // Header Controls Context
+            document.getElementById('global-controls').style.display = (page === 'dashboard' || page === 'sales' || page === 'inventory') ? 'flex' : 'none';
+
+            // Date filter visibility (only on dashboard)
+            const dateFilterBox = document.getElementById('dash-date-filter');
+            if (dateFilterBox) {
+                dateFilterBox.style.display = (page === 'dashboard') ? 'block' : 'none';
+            }
+
+            const fabBtn = document.getElementById('fab-add');
+            if (fabBtn) {
+                fabBtn.style.display = (['dashboard', 'sales', 'inventory'].includes(page)) ? 'flex' : 'none';
+            }
+
+            renderAll();
+        }
+
+        function renderSalesTable() {
+            const perms = auth.currentUser ? auth.currentUser.permissions : {};
+            const isMaster = auth.currentUser && auth.currentUser.role === 'Master';
+
+            // Collect all filter values
+            const fDate = document.getElementById('f-date') ? document.getElementById('f-date').value : '';
+            const fName = document.getElementById('f-name') ? document.getElementById('f-name').value.toLowerCase() : '';
+            const fProd = document.getElementById('f-prod') ? document.getElementById('f-prod').value : 'all';
+            const fSize = document.getElementById('f-size') ? document.getElementById('f-size').value.toLowerCase() : '';
+            const fStatus = document.getElementById('f-status') ? document.getElementById('f-status').value : 'all';
+
+            // Update Product Dropdown options dynamically if empty (except 'all')
+            const pSel = document.getElementById('f-prod');
+            if (pSel && pSel.options.length <= 1) {
+                Object.keys(state.catalog).forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p; opt.innerText = p;
+                    pSel.appendChild(opt);
+                });
+            }
+
+            // Filter logic
+            const txList = getTransactions();
+            const filtered = txList.filter(t => {
+                if (fDate && t.date !== fDate) return false;
+                if (fName && !t.name.toLowerCase().includes(fName)) return false;
+                if (fProd !== 'all' && t.product !== fProd) return false;
+                if (fSize && !t.size.toLowerCase().includes(fSize)) return false;
+                if (fStatus !== 'all' && (t.status || 'purchased') !== fStatus) return false;
+                return true;
+            });
+
+            const body = document.getElementById('sales-body');
+            if (filtered.length === 0) {
+                body.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:40px; color:#94A3B8;">
+                            <i class="fas fa-search" style="font-size:2rem; display:block; margin-bottom:10px;"></i>
+                            No transactions found matching your filters
+                        </td></tr>`;
+                return;
+            }
+
+            body.innerHTML = filtered.map(t => {
+                const isBooked = t.status === 'booked';
+                const paid = Number(t.paidAmount) || 0;
+                const total = Number(t.amount) || 0;
+                const balance = total - paid;
+                const payProgress = isBooked ? `<div style="font-size:0.7rem; color:#64748B; margin-top:2px;">Paid: ₹${paid.toLocaleString()} / ₹${total.toLocaleString()}</div>` : '';
+
+                return `
+                        <tr>
+                    <td>${t.date}</td>
+                    <td><b>${t.name}</b></td>
+                    <td>${t.product}</td>
+                    <td>${t.size}</td>
+                    <td>${t.qty}</td>
+                    <td>
+                        <div style="font-weight:700;">₹${total.toLocaleString()}</div>
+                        <div style="font-size:0.65rem; color:#94A3B8; margin-top:2px;">
+                            ${t.paymentMethod || 'Cash'}
+                            ${(t.paymentMethod === 'UPI' && t.upiId) ? ` | ID: ${t.upiId}` : ''}
+                        </div>
+                        ${payProgress}
+                    </td>
+                    <td>
+                        <span class="badge" style="background:${t.status === 'purchased' ? '#ECFDF5' : (isBooked ? '#FFF7ED' : '#eff6ff')}; 
+                            color:${t.status === 'purchased' ? '#059669' : (isBooked ? '#C2410C' : '#3b82f6')}">
+                            ${(t.status || 'purchased').toUpperCase()}
+                        </span>
+                        ${isBooked && t.promiseDate ? `<div style="font-size:0.65rem; color:#C2410C; margin-top:2px; font-weight:600;">Due: ${t.promiseDate}</div>` : ''}
+                    </td>
+                    <td style="text-align:right; white-space:nowrap;">
+                        <div style="display:inline-flex; gap:15px; align-items:center;">
+                            <button style="color:var(--primary); border:none; background:none; cursor:pointer; padding:5px; font-size:1.1rem;" onclick="printReceipt(${t.id})" title="Print Receipt">🖨️</button>
+                            ${(isMaster || perms.edit) ? `<button style="color:var(--secondary); border:none; background:none; cursor:pointer; padding:5px; font-size:1.1rem;" onclick="editTx(${t.id})">✏️</button>` : ''}
+                            ${(isMaster || perms.delete) ? `<button style="color:var(--danger); border:none; background:none; cursor:pointer; padding:5px; font-size:1.1rem;" onclick="deleteTx(${t.id})">🗑️</button>` : ''}
+                        </div>
+                    </td>
+                </tr>
+                        `}).join('');
+        }
+
+        function editTx(id) {
+            const isMaster = auth.currentUser && auth.currentUser.role === 'Master';
+            const perms = auth.currentUser ? auth.currentUser.permissions : {};
+            if (!isMaster && !perms.edit) return showToast("Permission Denied: Edit access required", "error");
+
+            const txList = [...state.sales, ...state.purchases];
+            const t = txList.find(tx => tx.id === id);
+            if (!t) return showToast("Transaction not found", "error");
+
+            // Set dynamic title and hidden type field
+            document.getElementById('tx-title').innerText = t.type === 'sell' ? 'Edit Sales Entry' : 'Edit Purchase Entry';
+            document.getElementById('t-type').value = t.type;
+
+            // Fill Form
+            updateFormDropdowns();
+            document.getElementById('t-date').value = t.date;
+            document.getElementById('t-customer').value = t.name;
+            document.getElementById('t-product').value = t.product;
+            updateSizeDropdown();
+            document.getElementById('t-size').value = t.size;
+            document.getElementById('t-qty').value = t.qty;
+            document.getElementById('t-amount').value = t.amount || "";
+            document.getElementById('t-status').value = t.status || "purchased";
+            document.getElementById('t-payment').value = t.paymentMethod || "Cash";
+            document.getElementById('t-upi-id').value = t.upiId || "";
+            document.getElementById('t-paid').value = t.paidAmount || "";
+            document.getElementById('t-promise').value = t.promiseDate || "";
+
+            toggleSettlementFields();
+            toggleUPIField();
+
+            // Store ID for update
+            document.getElementById('txForm').dataset.editId = id;
+
+            openModal();
+        }
+
+        function deleteTx(id) {
+            const isMaster = auth.currentUser && auth.currentUser.role === 'Master';
+            const perms = auth.currentUser ? auth.currentUser.permissions : {};
+            if (!isMaster && !perms.delete) return showToast("Permission Denied: Delete access required", "error");
+
+            if (confirm("Delete this record permanently?")) {
+                const sIdx = state.sales.findIndex(t => t.id === id);
+                if (sIdx !== -1) {
+                    state.sales.splice(sIdx, 1);
+                    localStorage.setItem(DB_KEYS.SALES, JSON.stringify(state.sales));
+                } else {
+                    const pIdx = state.purchases.findIndex(t => t.id === id);
+                    if (pIdx !== -1) {
+                        state.purchases.splice(pIdx, 1);
+                        localStorage.setItem(DB_KEYS.PURCHASE, JSON.stringify(state.purchases));
+                    }
+                }
+                renderAll();
+            }
+        }
+
+        function openModal() { document.getElementById('txModal').style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function updateFormDropdowns() {
+            const type = document.getElementById('t-type').value;
+            const activeCatalog = getCatalog(type);
+            const pSel = document.getElementById('t-product');
+            pSel.innerHTML = Object.keys(activeCatalog).map(p => `<option value="${p}">${p}</option>`).join('');
+            updateSizeDropdown();
+
+            const dl = document.getElementById('traderList');
+            dl.innerHTML = Object.keys(state.traders).map(k => `<option value="${k}">${k}</option>`).join('');
+        }
+
+        function updateSizeDropdown() {
+            const type = document.getElementById('t-type').value;
+            const activeCatalog = getCatalog(type);
+            const prod = document.getElementById('t-product').value;
+            const items = activeCatalog[prod] || [];
+            document.getElementById('t-size').innerHTML = items.map(item => `<option value="${item.size}">${item.size}</option>`).join('');
+        }
+
+        function checkNewCustomer(val) {
+            const box = document.getElementById('new-cust-phone-box');
+            if (val && !state.traders[val]) {
+                box.style.display = 'block';
+                document.getElementById('t-phone').required = true;
+            } else {
+                box.style.display = 'none';
+                document.getElementById('t-phone').required = false;
+            }
+        }
+
+        function toggleSettlementFields() {
+            const status = document.getElementById('t-status').value;
+            const paidBox = document.getElementById('paid-amount-box');
+            const dateBox = document.getElementById('promise-date-box');
+
+            if (status === 'booked') {
+                paidBox.style.display = 'block';
+                dateBox.style.display = 'block';
+            } else {
+                paidBox.style.display = 'none';
+                dateBox.style.display = 'none';
+                if (status === 'purchased') {
+                    autoFillPaid();
+                }
+            }
+        }
+
+        function toggleUPIField() {
+            const method = document.getElementById('t-payment').value;
+            const upiBox = document.getElementById('upi-id-box');
+            upiBox.style.display = (method === 'UPI') ? 'block' : 'none';
+        }
+
+        function autoFillPaid() {
+            const status = document.getElementById('t-status').value;
+            const total = document.getElementById('t-amount').value;
+            if (status === 'purchased') {
+                document.getElementById('t-paid').value = total;
+            }
+        }
+
+        document.getElementById('txForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const editId = e.target.dataset.editId;
+
+            const txData = {
+                date: document.getElementById('t-date').value,
+                name: document.getElementById('t-customer').value.trim(),
+                product: document.getElementById('t-product').value,
+                size: document.getElementById('t-size').value,
+                qty: Number(document.getElementById('t-qty').value),
+                type: document.getElementById('t-type').value,
+                amount: Number(document.getElementById('t-amount').value) || 0,
+                status: document.getElementById('t-status').value,
+                paymentMethod: document.getElementById('t-payment').value,
+                upiId: document.getElementById('t-upi-id').value.trim(),
+                paidAmount: Number(document.getElementById('t-paid').value) || 0,
+                promiseDate: document.getElementById('t-promise').value || ""
+            };
+
+            // Validation: Negative Amounts
+            if (txData.amount < 0 || txData.paidAmount < 0) {
+                showToast("Monetary amounts cannot be negative!", "error");
+                return;
+            }
+
+            if (!txData.name) {
+                showToast("Customer name is required!", "warning");
+                return;
+            }
+
+            // Enforce Phone for New Customer
+            if (!state.traders[txData.name]) {
+                const phone = document.getElementById('t-phone').value.trim();
+                if (!phone || phone.length < 10) {
+                    showToast("Please enter a valid 10-digit contact number for the new customer.", "error");
+                    document.getElementById('t-phone').focus();
+                    return;
+                }
+                state.traders[txData.name] = {
+                    contact: phone,
+                    type: txData.type === 'buy' ? 'Dealer' : 'Customer'
+                };
+                localStorage.setItem(DB_KEYS.TRADERS, JSON.stringify(state.traders));
+            }
+
+            if (editId) {
+                // Find and remove from whichever set it's in, then re-insert
+                const sIdx = state.sales.findIndex(t => t.id == editId);
+                const pIdx = state.purchases.findIndex(t => t.id == editId);
+
+                if (sIdx !== -1) state.sales.splice(sIdx, 1);
+                if (pIdx !== -1) state.purchases.splice(pIdx, 1);
+
+                const targetSet = txData.type === 'sell' ? state.sales : state.purchases;
+                targetSet.push({ ...txData, id: Number(editId) });
+                showToast("Entry Updated!");
+            } else {
+                txData.id = Date.now();
+                const targetSet = txData.type === 'sell' ? state.sales : state.purchases;
+                targetSet.push(txData);
+                showToast("Entry Saved!");
+            }
+
+            localStorage.setItem(DB_KEYS.SALES, JSON.stringify(state.sales));
+            localStorage.setItem(DB_KEYS.PURCHASE, JSON.stringify(state.purchases));
+            closeModal('txModal');
+            document.getElementById('new-cust-phone-box').style.display = 'none';
+            document.getElementById('t-phone').value = '';
+
+            // Clean up edit meta
+            delete e.target.dataset.editId;
+            document.getElementById('tx-title').innerText = 'New Transaction';
+
+            renderAll();
+        });
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('main-sidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+
+        function printReceipt(id) {
+            const txList = [...state.sales, ...state.purchases];
+            const t = txList.find(tx => tx.id === id);
+            if (!t) return;
+            const trader = state.traders[t.name];
+            const contact = (typeof trader === 'object') ? trader.contact : (trader || 'N/A');
+
+            document.getElementById('r-id').innerText = t.id.toString().slice(-6);
+            document.getElementById('r-date').innerText = t.date;
+            document.getElementById('r-cust').innerText = t.name;
+            document.getElementById('r-contact').innerText = contact;
+            document.getElementById('r-prod').innerText = `${t.product} (${t.size})`;
+            document.getElementById('r-qty').innerText = t.qty;
+            document.getElementById('r-amt').innerText = `₹${(t.amount || 0).toLocaleString()} `;
+            document.getElementById('r-total').innerText = (t.amount || 0).toLocaleString();
+
+            // Payment Method Info in Receipt
+            const pInfo = document.getElementById('r-payment-info');
+            pInfo.innerHTML = `Method: ${t.paymentMethod || 'Cash'} ${(t.paymentMethod === 'UPI' && t.upiId) ? `| Ref: ${t.upiId}` : ''} `;
+
+            // Settlement Info in Receipt
+            const paid = Number(t.paidAmount) || 0;
+            const balance = (Number(t.amount) || 0) - paid;
+            const sInfo = document.getElementById('r-settlement-info');
+            if (t.status === 'booked') {
+                sInfo.style.display = 'block';
+                sInfo.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; margin-top:5px; font-weight:700;">
+                        <span>Paid (Advance):</span> <span>₹${paid.toLocaleString()}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; color:var(--danger); border-top:1px solid #eee; margin-top:5px; padding-top:5px;">
+                        <span>Balance Due:</span> <span>₹${balance.toLocaleString()}</span>
+                    </div>
+                    ${t.promiseDate ? `<div style="font-size:0.75rem; color:#64748B; margin-top:5px;">Promised Settlement: ${t.promiseDate}</div>` : ''}
+                `;
+            } else {
+                sInfo.style.display = 'none';
+            }
+
+            const printArea = document.getElementById('receipt-print');
+            printArea.style.display = 'block';
+            window.print();
+            printArea.style.display = 'none';
+        }
+
+    </script>
+    <!-- Floating Action Button -->
+    <button class="fab" id="fab-add" onclick="openModalWithMode()" title="Add New Entry">
+        <i class="fas fa-plus"></i>
+    </button>
+    <!-- RECEIPT TEMPLATE (Hidden) -->
+    <div id="receipt-print" style="display:none; padding:40px; background:white; font-family:sans-serif;">
+        <div style="text-align:center; margin-bottom:20px;">
+            <h1 style="margin:0; font-family:'Rajdhani'; color:var(--primary);">UHB</h1>
+            <div style="font-size:0.85rem; color:#64748B;">Uthaya Hollow Blocks & Allied Products</div>
+            <div style="font-size:0.75rem;">Contact: +91 91590 54341</div>
+        </div>
+        <hr style="border:0; border-top:1px dashed #ccc; margin:15px 0;">
+        <div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:10px;">
+            <div><b>Receipt #</b> <span id="r-id"></span></div>
+            <div><b>Date:</b> <span id="r-date"></span></div>
+        </div>
+        <div style="font-size:0.9rem; margin-bottom:20px;">
+            <b>Customer:</b> <span id="r-cust"></span><br>
+            <b>Contact:</b> <span id="r-contact"></span>
+        </div>
+        <table style="width:100%; font-size:0.9rem; border-collapse:collapse; margin-bottom:20px;">
+            <thead>
+                <tr style="border-bottom:1px solid #eee;">
+                    <th style="text-align:left; padding:8px 0;">Product</th>
+                    <th style="text-align:right; padding:8px 0;">Qty</th>
+                    <th style="text-align:right; padding:8px 0;">Amt</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td id="r-prod" style="padding:10px 0;"></td>
+                    <td id="r-qty" style="text-align:right;"></td>
+                    <td id="r-amt" style="text-align:right; font-weight:700;"></td>
+                </tr>
+            </tbody>
+        </table>
+        <div style="text-align:right; margin-bottom:30px;">
+            <div id="r-payment-info" style="font-size:0.75rem; color:#64748B; margin-bottom:5px;"></div>
+            <div style="font-size:1.1rem; font-weight:700;">Total Amount: ₹<span id="r-total"></span></div>
+            <div id="r-settlement-info" style="margin-top:10px; font-size:0.9rem;"></div>
+        </div>
+        <div style="text-align:center; font-size:0.75rem; color:#94A3B8; margin-top:40px;">
+            Thank you for your business!<br>This is a computer generated receipt.
+        </div>
+    </div>
+</body>
+
+</html>

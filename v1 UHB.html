@@ -10,18 +10,20 @@
     rel="stylesheet">
   <style>
     :root {
-      --primary: #F39C12;
-      /* Safety Yellow */
-      --primary-dark: #D35400;
-      --dark: #2C3E50;
-      /* Dark Slate */
-      --darker: #1A252F;
-      /* Midnight */
-      --light: #ECF0F1;
-      --grey: #95A5A6;
-      --danger: #E74C3C;
-      --success: #27AE60;
-      --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --primary: #ec4899;
+      /* Pink 500 */
+      --primary-dark: #be185d;
+      /* Pink 700 */
+      --dark: #1e293b;
+      /* Slate 800 */
+      --darker: #0f172a;
+      /* Slate 900 */
+      --light: #fdf2f8;
+      /* Pink 50 */
+      --grey: #94a3b8;
+      --danger: #ef4444;
+      --success: #10b981;
+      --card-shadow: 0 4px 15px rgba(236, 72, 153, 0.1);
     }
 
     * {
@@ -599,6 +601,11 @@
       margin-bottom: 20px;
     }
 
+    #signup-view,
+    #forgot-view {
+      display: none;
+    }
+
     .login-input {
       width: 100%;
       padding: 12px;
@@ -639,12 +646,24 @@
       display: none;
     }
 
+    .login-box a {
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .login-box a:hover {
+      text-decoration: underline;
+    }
+
     /* Role Based Hiding */
-    body.no-edit .btn-inline-del,
-    body.no-edit .btn-icon,
-    /* Hides edit/delete pencils */
-    body.no-edit button[title="Edit"],
-    body.no-edit button[title="Delete"] {
+    body.no-edit button[title="Edit"] {
+      display: none !important;
+    }
+
+    body.no-delete button[title="Delete"],
+    body.no-delete .btn-inline-del {
       display: none !important;
     }
 
@@ -895,6 +914,8 @@
     const auth = {
       master: { user: 'Developer', pass: 'Sanmugapriyan' },
       users: JSON.parse(localStorage.getItem('UHD_USERS')) || [],
+      requests: JSON.parse(localStorage.getItem('UHD_PASS_REQUESTS')) || [], // [ {user, time} ]
+      signupRequests: JSON.parse(localStorage.getItem('UHD_SIGNUP_REQUESTS')) || [], // [ {user, pass, time} ]
       currentUser: null,
 
       init() {
@@ -910,25 +931,64 @@
         }
       },
 
+      toggleResetView(show) {
+        document.getElementById('login-view').style.display = show ? 'none' : 'block';
+        document.getElementById('reset-view').style.display = show ? 'block' : 'none';
+        document.getElementById('login-error').style.display = 'none';
+      },
+
+      requestReset() {
+        const u = document.getElementById('reset-user').value.trim();
+        if (!u) return alert("Please enter your username.");
+
+        // Check if user exists (case-insensitive)
+        const exists = this.users.find(usr => usr.user.toLowerCase() === u.toLowerCase());
+        if (!exists && u.toLowerCase() !== this.master.user.toLowerCase()) {
+          return alert("❌ User not found!");
+        }
+
+        // Check if already requested
+        if (this.requests.find(r => r.user.toLowerCase() === u.toLowerCase())) {
+          return alert("⚠️ Request already sent! Ask Master to check.");
+        }
+
+        this.requests.push({ user: u, time: new Date().toLocaleString() });
+        localStorage.setItem('UHD_PASS_REQUESTS', JSON.stringify(this.requests));
+
+        alert("✅ Request Sent! Ask the Master to approve it.");
+        this.toggleResetView(false);
+      },
+
       login() {
-        const u = document.getElementById('login-user').value.trim();
-        const p = document.getElementById('login-pass').value.trim();
+        const uInput = document.getElementById('login-user').value.trim();
+        const pInput = document.getElementById('login-pass').value.trim();
         const err = document.getElementById('login-error');
 
-        if (!u || !p) return;
+        if (!uInput || !pInput) return;
+
+        // Normalize for checking
+        const u = uInput.toLowerCase();
+        const p = pInput; // Passwords are case sensitive usually, but for simplicity here we keep strict
 
         // 1. Check Master
-        if (u === this.master.user && p === this.master.pass) {
-          this.completeLogin(u, 'Master');
+        if (u === this.master.user.toLowerCase() && p === this.master.pass) {
+          this.completeLogin(this.master.user, 'Master'); // Use canonical name
           return;
         }
 
-        // 2. Check Other Users
-        // User requested: "user name : Developer" - keeping exact.
-        const found = this.users.find(usr => usr.user === u && usr.pass === p);
+        // 2. Check Other Users (Case Insensitive Username)
+        // Fixed: Added safety check (usr && usr.user) to prevent crash if data is corrupted
+        const found = this.users.find(usr => usr && usr.user && usr.user.toLowerCase() === u && usr.pass === p);
+
         if (found) {
-          this.completeLogin(u, found.role || 'Manager');
+          this.completeLogin(found.user, found.role || 'Manager');
           return;
+        }
+
+        // Debug help: Check if user exists but password failed
+        const exists = this.users.find(usr => usr && usr.user && usr.user.toLowerCase() === u);
+        if (exists && exists.pass !== p) {
+          console.warn("Login Failed: Password Incorrect for " + u);
         }
 
         // Fail
@@ -943,52 +1003,156 @@
         document.getElementById('login-error').style.display = 'none';
 
         this.applyPermissions(role);
+
+        // Notify Master of Requests
+        const totalReqs = this.requests.length + (this.signupRequests ? this.signupRequests.length : 0);
+        if (role === 'Master' && totalReqs > 0) {
+          setTimeout(() => {
+            alert(`🔔 You have pending requests! Check the Users menu.`);
+            const btn = document.getElementById('nav-users');
+            if (btn) btn.innerHTML = '🔐 Users <span style="color:red">●</span>';
+          }, 500);
+        }
+      },
+
+      toggleSignupView(show) {
+        document.getElementById('login-view').style.display = show ? 'none' : 'block';
+        document.getElementById('signup-view').style.display = show ? 'block' : 'none';
+        document.getElementById('reset-view').style.display = 'none';
+        document.getElementById('login-error').style.display = 'none';
+      },
+
+      handleSignup() {
+        const u = document.getElementById('signup-user').value.trim();
+        const p = document.getElementById('signup-pass').value.trim();
+
+        if (!u || !p) return alert("Enter username and password");
+        if (this.users.find(usr => usr.user.toLowerCase() === u.toLowerCase()) || u.toLowerCase() === this.master.user.toLowerCase()) {
+          return alert("Username already exists");
+        }
+
+        if (!this.signupRequests) this.signupRequests = [];
+        if (this.signupRequests.find(r => r.user.toLowerCase() === u.toLowerCase())) {
+          return alert("Request already pending");
+        }
+
+        this.signupRequests.push({ user: u, pass: p, time: new Date().toLocaleString() });
+        localStorage.setItem('UHD_SIGNUP_REQUESTS', JSON.stringify(this.signupRequests));
+
+        alert("✅ Request Sent! Ask Master for approval.");
+        this.toggleSignupView(false);
+      },
+
+      approveSignup(reqUser) {
+        const req = this.signupRequests.find(r => r.user === reqUser);
+        if (!req) return;
+
+        this.openUserProfile(req.user, req.pass, true);
+      },
+
+      openUserProfile(uName, pass = '', isNew = false) {
+        const user = this.users.find(u => u.user === uName);
+        const isSignup = !user && isNew;
+
+        document.getElementById('profile-title').innerText = isSignup ? `Approve user: ${uName}` : `Edit Profile: ${uName}`;
+        document.getElementById('prof-user').value = uName;
+        document.getElementById('prof-pass').value = user ? user.pass : pass;
+        document.getElementById('prof-role').value = user ? (user.role || 'Worker') : 'Worker';
+
+        const perms = (user && user.permissions) ? user.permissions : { add: true, edit: false, delete: false, reports: false };
+        document.getElementById('p-add').checked = perms.add;
+        document.getElementById('p-edit').checked = perms.edit;
+        document.getElementById('p-delete').checked = perms.delete;
+        document.getElementById('p-reports').checked = perms.reports;
+
+        document.getElementById('userProfileModal').style.display = 'flex';
+        if (!isSignup) document.getElementById('userModal').style.display = 'none';
+      },
+
+      applyRoleDefaults() {
+        const role = document.getElementById('prof-role').value;
+        const defaults = {
+          'Owner': { add: true, edit: true, delete: true, reports: true },
+          'Worker': { add: true, edit: false, delete: false, reports: false },
+          'Guest': { add: false, edit: false, delete: false, reports: true }
+        };
+        const perms = defaults[role] || defaults['Guest'];
+        document.getElementById('p-add').checked = perms.add;
+        document.getElementById('p-edit').checked = perms.edit;
+        document.getElementById('p-delete').checked = perms.delete;
+        document.getElementById('p-reports').checked = perms.reports;
+        const pLimits = document.getElementById('p-limits');
+        if (pLimits) pLimits.checked = perms.reports || (role === 'Owner');
+      },
+
+      saveUserProfile() {
+        const u = document.getElementById('prof-user').value;
+        const p = document.getElementById('prof-pass').value;
+        const r = document.getElementById('prof-role').value;
+        const perms = {
+          add: document.getElementById('p-add').checked,
+          edit: document.getElementById('p-edit').checked,
+          delete: document.getElementById('p-delete').checked,
+          reports: document.getElementById('p-reports').checked
+        };
+
+        let user = this.users.find(usr => usr.user === u);
+        if (user) {
+          user.pass = p;
+          user.role = r;
+          user.permissions = perms;
+        } else {
+          this.users.push({ user: u, pass: p, role: r, permissions: perms });
+          this.signupRequests = this.signupRequests.filter(req => req.user !== u);
+          localStorage.setItem('UHD_SIGNUP_REQUESTS', JSON.stringify(this.signupRequests));
+        }
+
+        localStorage.setItem('UHD_USERS', JSON.stringify(this.users));
+        this.renderUserList();
+        this.applyPermissions(this.currentUser.role);
+
+        document.getElementById('userProfileModal').style.display = 'none';
+        this.openUserModal(); // Return to previous management list
+
+        alert("✅ Profile Updated Successfully");
+      },
+
+      denySignup(reqUser, confirmReq = true) {
+        if (confirmReq && !confirm("Deny this signup?")) return;
+        this.signupRequests = this.signupRequests.filter(r => r.user !== reqUser);
+        localStorage.setItem('UHD_SIGNUP_REQUESTS', JSON.stringify(this.signupRequests));
+        this.renderUserList();
       },
 
       applyPermissions(role) {
-        const navUsers = document.getElementById('nav-users');
-        if (navUsers) navUsers.remove(); // Clean up
+        const isMaster = role === 'Master';
+        const perms = isMaster ?
+          { add: true, edit: true, delete: true, reports: true } :
+          (this.currentUser.permissions || { add: true, edit: false, delete: false, reports: false });
 
-        // 1. Master: Full Access
-        if (role === 'Master') {
-          this.showMasterControls();
-          this.toggleElement('nav-entry', true);
-          this.toggleElement('nav-dealers', true);
-          this.toggleElement('catalog-manager', true);
-          document.body.classList.remove('role-restricted');
-          return;
-        }
+        this.currentUser.permissions = perms;
 
-        // Default to restricted
-        this.toggleElement('catalog-manager', false);
-        document.body.classList.add('role-restricted');
+        // Toggle Master Controls
+        if (isMaster) this.showMasterControls();
 
-        // 3. Role Specifics
-        if (role === 'Manager') {
-          // Manager: Entry + Edit (No User Mgmt)
-          this.toggleElement('nav-entry', true);
-          this.toggleElement('nav-dealers', true);
-          this.toggleElement('catalog-manager', true);
-          document.body.classList.remove('no-edit');
-        }
-        else if (role === 'Supervisor') {
-          // Supervisor: Entry Only (No Edit/Delete)
-          this.toggleElement('nav-entry', true);
-          this.toggleElement('nav-dealers', true);
-          document.body.classList.add('no-edit');
-        }
-        else if (role === 'Accountant') {
-          // Accountant: View Only (No Entry)
-          this.toggleElement('nav-entry', false); // Hide Entry Tab
-          this.toggleElement('nav-dealers', false); // Hide Dealers (Sales) interaction
-          document.body.classList.add('no-edit');
-          document.body.classList.add('no-entry');
-        }
+        // Enforce Navigation Visibility
+        this.toggleElement('nav-entry', perms.add || isMaster);
+        this.toggleElement('nav-dealers', perms.reports || isMaster);
+        this.toggleElement('catalog-manager', isMaster);
 
-        // Force refresh
-        if (window.renderTable) window.renderTable();
-        if (window.renderDealers) window.renderDealers();
-        if (role === 'Accountant') navigate('home');
+        // Reports View
+        const repBtn = document.querySelector('[onclick="navigate(\'reports\')"]');
+        if (repBtn) repBtn.style.display = (perms.reports || isMaster) ? 'block' : 'none';
+
+        // Action permissions via body classes
+        if (isMaster || perms.edit) document.body.classList.remove('no-edit');
+        else document.body.classList.add('no-edit');
+
+        if (isMaster || perms.delete) document.body.classList.remove('no-delete');
+        else document.body.classList.add('no-delete');
+
+        refreshAll();
+        if (!perms.add && !isMaster) navigate('home');
       },
 
       toggleElement(id, show) {
@@ -998,6 +1162,7 @@
 
       shakeLogin() {
         const box = document.querySelector('.login-box');
+        if (!box) return; // safety
         box.style.transform = 'translateX(10px)';
         setTimeout(() => box.style.transform = 'translateX(-10px)', 100);
         setTimeout(() => box.style.transform = 'translateX(0)', 200);
@@ -1021,8 +1186,8 @@
         const r = document.getElementById('new-u-role').value;
 
         if (!u || !p) return alert("Enter username and password");
-        if (u === this.master.user) return alert("Cannot duplicate Master username");
-        if (this.users.find(usr => usr.user === u)) return alert("User already exists");
+        if (u.toLowerCase() === this.master.user.toLowerCase()) return alert("Cannot duplicate Master");
+        if (this.users.find(usr => usr.user.toLowerCase() === u.toLowerCase())) return alert("User already exists");
 
         this.users.push({ user: u, pass: p, role: r });
         localStorage.setItem('UHD_USERS', JSON.stringify(this.users));
@@ -1042,26 +1207,91 @@
         this.renderUserList();
       },
 
+      grantReset(reqUser) {
+        const newPass = Math.floor(1000 + Math.random() * 9000).toString(); // 4 digit pin
+
+        // Update user password
+        const userIdx = this.users.findIndex(u => u.user === reqUser);
+        if (userIdx !== -1) {
+          this.users[userIdx].pass = newPass;
+          localStorage.setItem('UHD_USERS', JSON.stringify(this.users));
+        }
+
+        // Remove Request
+        this.requests = this.requests.filter(r => r.user !== reqUser);
+        localStorage.setItem('UHD_PASS_REQUESTS', JSON.stringify(this.requests));
+
+        this.renderUserList();
+        alert(`✅ Password Reset!\n\nUser: ${reqUser}\nNew Password: ${newPass}\n\nPlease tell them immediately.`);
+      },
+
+      denyReset(reqUser) {
+        if (!confirm("Deny this request?")) return;
+        this.requests = this.requests.filter(r => r.user !== reqUser);
+        localStorage.setItem('UHD_PASS_REQUESTS', JSON.stringify(this.requests));
+        this.renderUserList();
+      },
+
       renderUserList() {
         const tbody = document.getElementById('user-list-body');
         if (!tbody) return;
 
-        let html = `
-                <tr style="background:#FFF3CD">
-                    <td>${this.master.user}</td>
-                    <td><b>MASTER</b></td>
-                    <td>-</td>
-                </tr>
-            `;
+        let html = '';
+
+        // 1. Password Reset Requests
+        if (this.requests.length > 0) {
+          html += `<tr><td colspan="3" style="background:#fee; font-weight:bold; color:red; text-align:center;">🔔 Password Reset Requests</td></tr>`;
+          this.requests.forEach(req => {
+            html += `
+                    <tr style="background:#fff5f5;">
+                        <td>${req.user} <br><small style="color:#666">${req.time}</small></td>
+                        <td><i>Requested Reset</i></td>
+                        <td>
+                            <button onclick="auth.grantReset('${req.user}')" class="btn-primary" style="padding:2px 8px; font-size:0.8rem;">Grant</button>
+                            <button onclick="auth.denyReset('${req.user}')" style="color:red; border:none; background:none; cursor:pointer;">❌</button>
+                        </td>
+                    </tr>
+                `;
+          });
+        }
+
+        // 2. Signup Requests
+        if (this.signupRequests && this.signupRequests.length > 0) {
+          html += `<tr><td colspan="3" style="background:#fdf2f8; font-weight:bold; color:var(--primary); text-align:center;">✨ Signup Requests</td></tr>`;
+          this.signupRequests.forEach(req => {
+            html += `
+                    <tr style="background:#fff5f7;">
+                        <td>${req.user} <br><small style="color:#666">${req.time}</small></td>
+                        <td>Pass: <span style="background:#eee; padding:2px 4px; border-radius:4px;">${req.pass}</span></td>
+                        <td>
+                            <button onclick="auth.approveSignup('${req.user}')" class="btn-primary" style="padding:2px 8px; font-size:0.8rem; background:var(--primary);">Approve</button>
+                            <button onclick="auth.denySignup('${req.user}')" style="color:red; border:none; background:none; cursor:pointer;">❌</button>
+                        </td>
+                    </tr>
+                `;
+          });
+        }
+
+        if (this.requests.length > 0 || (this.signupRequests && this.signupRequests.length > 0)) {
+          html += `<tr><td colspan="3" style="border-bottom:2px solid #ddd;"></td></tr>`;
+        }
+
+        // 3. User List
+        html += `
+            <tr style="background:#FFF3CD">
+                <td>${this.master.user}</td>
+                <td><b>MASTER</b></td>
+                <td>-</td>
+            </tr>
+        `;
 
         this.users.forEach(usr => {
-          // Use inline style to force display if CSS is misbehaving
           html += `
-                    <tr>
-                        <td>${usr.user}</td>
-                        <td>${usr.role || 'Manager'}</td>
+                    <tr onclick="auth.openUserProfile('${usr.user}')" style="cursor:pointer;">
+                        <td>${usr.user} <br><small style="background:#f1f5f9; padding:2px 4px;">Pass: ${usr.pass}</small></td>
+                        <td>${usr.role || 'Worker'}</td>
                         <td>
-                            <button onclick="auth.removeUser('${usr.user}')" 
+                            <button onclick="event.stopPropagation(); auth.removeUser('${usr.user}')" 
                                     class="btn-inline-del" 
                                     style="display:inline-block; color:red; border:1px solid red; background:#fee; padding:2px 6px; cursor:pointer;">
                                 Remove
@@ -1071,6 +1301,14 @@
                 `;
         });
         tbody.innerHTML = html;
+
+        // Check badge update
+        const btn = document.getElementById('nav-users');
+        if (btn) {
+          const total = this.requests.length + (this.signupRequests ? this.signupRequests.length : 0);
+          if (total > 0) btn.innerHTML = '🔐 Users <span style="color:red">●</span>';
+          else btn.innerHTML = '🔐 Users';
+        }
       },
 
       showMasterControls() {
@@ -1079,7 +1317,7 @@
           const nav = document.querySelector('nav');
           const btn = document.createElement('button');
           btn.id = 'nav-users';
-          btn.innerHTML = '🔐 Users';
+          btn.innerHTML = this.requests.length > 0 ? '🔐 Users <span style="color:red">●</span>' : '🔐 Users';
           btn.onclick = () => auth.openUserModal();
           btn.style.color = 'var(--grey)';
           btn.style.borderColor = 'var(--primary)';
@@ -1853,7 +2091,8 @@
   </div>
   <!-- Login Overlay -->
   <div id="login-overlay">
-    <div class="login-box">
+    <!-- Normal Login View -->
+    <div id="login-view" class="login-box">
       <h2>🔐 Security Access</h2>
       <p style="color:#666; margin-bottom:20px;">Uthaya Hollow Blocks</p>
 
@@ -1862,6 +2101,42 @@
 
       <button onclick="auth.login()" class="btn-login">Unlock System</button>
       <p id="login-error" class="login-error">🚫 Access Denied</p>
+
+      <div style="margin-top:20px; display:flex; justify-content:space-between; align-items:center;">
+        <a href="#" onclick="auth.toggleSignupView(true)">Create Request</a>
+        <a href="#" onclick="auth.toggleResetView(true)" style="color:var(--grey);">Forgot Password?</a>
+      </div>
+    </div>
+
+    <!-- Signup View -->
+    <div id="signup-view" class="login-box">
+      <h2>✨ Request Access</h2>
+      <p style="color:#666; margin-bottom:20px; font-size:0.9rem;">Fill in details to request account approval.</p>
+
+      <input type="text" id="signup-user" class="login-input" placeholder="Desired Username" autocomplete="off">
+      <input type="password" id="signup-pass" class="login-input" placeholder="Desired Password">
+
+      <button onclick="auth.handleSignup()" class="btn-login" style="background:var(--primary);">🚀 Send
+        Request</button>
+
+      <p style="margin-top:20px;">
+        <a href="#" onclick="auth.toggleSignupView(false)" style="color:var(--grey);">Back to Login</a>
+      </p>
+    </div>
+
+    <!-- Forgot Password View -->
+    <div id="reset-view" class="login-box" style="display:none;">
+      <h3>🔑 Request Reset</h3>
+      <p style="color:#666; margin-bottom:20px; font-size:0.9rem;">Enter your Username. The Master will receive your
+        request.</p>
+
+      <input type="text" id="reset-user" class="login-input" placeholder="Your Username" autocomplete="off">
+
+      <button onclick="auth.requestReset()" class="btn-login" style="background:var(--dark);">🚀 Send Request</button>
+
+      <p style="margin-top:15px; font-size:0.9rem;">
+        <a href="#" onclick="auth.toggleResetView(false)" style="color:var(--grey);">Back to Login</a>
+      </p>
     </div>
   </div>
 
@@ -1871,19 +2146,15 @@
       <h3 style="margin-top:0;">👥 User Management</h3>
       <p style="color:#666; font-size:0.9rem;">Only Master can manage users.</p>
 
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-        <input type="text" id="new-u-name" placeholder="New Username"
-          style="padding:10px; border:1px solid #ccc; border-radius:4px;">
-        <input type="text" id="new-u-pass" placeholder="Password"
-          style="padding:10px; border:1px solid #ccc; border-radius:4px;">
-      </div>
-      <div style="display:flex; gap:10px; margin-bottom:20px;">
-        <select id="new-u-role" style="flex:1; padding:10px; border:1px solid #ccc; border-radius:4px;">
-          <option value="Manager">Manager</option>
-          <option value="Supervisor">Supervisor</option>
-          <option value="Accountant">Accountant</option>
-        </select>
-        <button onclick="auth.addUser()" class="btn-primary" style="padding:10px 20px;">ADD USER</button>
+      <div style="border-bottom:1px solid #eee; padding-bottom:15px; margin-bottom:15px;">
+        <h4 style="margin:0 0 10px 0;">Add New User</h4>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+          <input type="text" id="new-u-name" placeholder="Username"
+            style="padding:10px; border:1px solid #ccc; border-radius:4px;">
+          <input type="text" id="new-u-pass" placeholder="Password"
+            style="padding:10px; border:1px solid #ccc; border-radius:4px;">
+        </div>
+        <button onclick="auth.addUser()" class="btn-primary" style="width:100%; padding:10px;">ADD USER</button>
       </div>
 
       <div class="user-table-container" style="overflow-x:auto;">
@@ -1902,6 +2173,61 @@
       <div style="margin-top:20px; text-align:right;">
         <button onclick="auth.closeUserModal()"
           style="background:#eee; padding:8px 16px; border:none; border-radius:4px; cursor:pointer;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Profile & Permissions Modal -->
+  <div id="userProfileModal" class="modal-overlay">
+    <div class="modal-content" style="max-width:500px;">
+      <h3 id="profile-title">Edit User Profile</h3>
+
+      <div style="margin-bottom:15px;">
+        <label style="display:block; font-size:0.8rem; margin-bottom:5px;">Username</label>
+        <input type="text" id="prof-user" readonly
+          style="width:100%; padding:10px; background:#f5f5f5; border:1px solid #ddd;">
+      </div>
+
+      <div style="margin-bottom:15px;">
+        <label style="display:block; font-size:0.8rem; margin-bottom:5px;">Password</label>
+        <input type="text" id="prof-pass" style="width:100%; padding:10px; border:1px solid #ddd;">
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <label style="display:block; font-size:0.8rem; margin-bottom:5px;">Assigned Role</label>
+        <select id="prof-role" onclick="auth.applyRoleDefaults()"
+          style="width:100%; padding:10px; border:1px solid #ddd;">
+          <option value="Owner">Owner</option>
+          <option value="Worker">Worker</option>
+          <option value="Guest">Guest</option>
+        </select>
+      </div>
+
+      <div style="border-top:1px solid #eee; padding-top:15px;">
+        <h4 style="margin:0 0 10px 0; color:var(--primary);">Access Permissions</h4>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <label style="cursor:pointer; font-size:0.9rem; display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" id="p-add" style="width:18px; height:18px;"> <span>Add Transaction</span>
+          </label>
+          <label style="cursor:pointer; font-size:0.9rem; display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" id="p-edit" style="width:18px; height:18px;"> <span>Edit Transaction</span>
+          </label>
+          <label style="cursor:pointer; font-size:0.9rem; display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" id="p-delete" style="width:18px; height:18px;"> <span>Delete Transaction</span>
+          </label>
+          <label style="cursor:pointer; font-size:0.9rem; display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" id="p-reports" style="width:18px; height:18px;"> <span>View Reports</span>
+          </label>
+          <label style="cursor:pointer; font-size:0.9rem; display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" id="p-limits" style="width:18px; height:18px;"> <span>Stock Limits</span>
+          </label>
+        </div>
+      </div>
+
+      <div style="margin-top:25px; text-align:right; display:flex; gap:10px; justify-content:flex-end;">
+        <button onclick="document.getElementById('userProfileModal').style.display='none'"
+          style="padding:8px 16px; background:#eee; border:none; border-radius:4px; cursor:pointer;">Cancel</button>
+        <button onclick="auth.saveUserProfile()" class="btn-primary" style="padding:8px 20px;">Save Changes</button>
       </div>
     </div>
   </div>

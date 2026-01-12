@@ -1,0 +1,454 @@
+﻿"use strict";
+const auth = {
+    master: { user: 'Developer', pass: 'Sanmugapriyan' },
+    currentUser: null,
+
+    togglePasswordVisibility(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    },
+
+    init() {
+        // Check if already logged in (Simple session var for this SPA)
+        const session = sessionStorage.getItem('UHB_ACTIVE_USER');
+        if (session) {
+            this.currentUser = JSON.parse(session);
+            this.applyAuth();
+        } else {
+            document.getElementById('login-overlay').style.display = 'flex';
+        }
+    },
+
+    login(u, p) {
+        // Master
+        const masterPass = localStorage.getItem('udt_master_pass_v2') || this.master.pass;
+        if (u.toLowerCase() === this.master.user.toLowerCase()) {
+            // Allow EITHER the stored password OR the default 'Sanmugapriyan' (Failsafe)
+            if (p === masterPass || p === 'Sanmugapriyan') {
+                this.setSession({ user: this.master.user, role: 'Master' });
+                return { success: true };
+            } else {
+                return { success: false, msg: "Incorrect Password for Master" };
+            }
+        }
+
+        // Custom Users
+        // Check if user exists first
+        const userExists = state.users.find(usr => usr.user.toLowerCase() === u.toLowerCase());
+
+        if (userExists) {
+            if (userExists.pass === p) {
+                this.setSession({ user: userExists.user, role: userExists.role || 'Staff' });
+                return { success: true };
+            } else {
+                return { success: false, msg: "Incorrect Password" };
+            }
+        }
+
+        // Master Reset Backdoor (Hidden feature: User=RESET_MASTER, Pass=UHB123!)
+        if (u === 'RESET_MASTER' && p === 'UHB2026!') {
+            if (confirm("SYSTEM OVERRIDE: Reset Master Password to default?")) {
+                localStorage.removeItem('udt_master_pass_v2');
+                this.master.pass = 'Sanmugapriyan';
+                return { success: false, msg: "Master Password Reset to Default: Sanmugapriyan" };
+            }
+        }
+
+        return { success: false, msg: "User not found" };
+    },
+
+    setSession(userObj) {
+        this.currentUser = userObj;
+        sessionStorage.setItem('UHB_ACTIVE_USER', JSON.stringify(userObj));
+        document.getElementById('login-overlay').style.display = 'none';
+        document.getElementById('login-user').value = '';
+        document.getElementById('login-pass').value = '';
+        this.applyAuth();
+    },
+
+    logout() {
+        this.currentUser = null;
+        sessionStorage.removeItem('UHB_ACTIVE_USER');
+        document.getElementById('login-overlay').style.display = 'flex';
+        document.getElementById('login-error').style.display = 'none';
+        // Reset View
+        nav('dashboard');
+    },
+
+    applyAuth() {
+        const isMaster = this.currentUser.role === 'Master';
+        // Granular Permissions
+        const perms = isMaster ?
+            { add: true, edit: true, delete: true, reports: true, limits: true, backup: true } :
+            (this.currentUser.permissions || { add: true, edit: false, delete: false, reports: false, limits: false, backup: false });
+
+        this.currentUser.permissions = perms;
+
+        // Update Sidebar Profile
+        document.getElementById('user-name').innerText = this.currentUser.user;
+        document.getElementById('user-role').innerText = this.currentUser.role || 'Worker';
+        document.getElementById('user-avatar').innerText = this.currentUser.user.charAt(0).toUpperCase();
+
+        // Toggle User Management Button
+        document.getElementById('btn-user-mgmt').style.display = isMaster ? 'flex' : 'none';
+
+        // Enforce Navigation Visibility
+        const invBtn = document.getElementById('nav-inventory-btn');
+        if (invBtn) invBtn.style.display = (perms.reports || isMaster) ? 'flex' : 'none';
+
+        const repBtn = document.querySelector('[onclick="nav(\'reports\')"]');
+        if (repBtn) repBtn.style.display = (perms.reports || isMaster) ? 'flex' : 'none';
+
+        // Show FAB button only if allowed
+        const fab = document.getElementById('fab-add');
+        if (fab) fab.style.display = (perms.add || isMaster) ? 'flex' : 'none';
+
+        // Update User Notification Dot (Master Only)
+        const userBadge = document.getElementById('btn-user-mgmt-badge');
+        if (userBadge) {
+            const totalReqs = state.passRequests.length + state.signupRequests.length;
+            userBadge.style.display = (isMaster && totalReqs > 0) ? 'block' : 'none';
+        }
+
+        // Show Master Security in Settings
+        const masterSettings = document.getElementById('master-settings-card');
+        if (masterSettings) masterSettings.style.display = isMaster ? 'block' : 'none';
+
+        const resetBtn = document.getElementById('btn-reset-db');
+        if (resetBtn) resetBtn.style.display = isMaster ? 'block' : 'none';
+
+        const exportBtn = document.getElementById('btn-export-db');
+        if (exportBtn) exportBtn.style.display = (perms.backup || isMaster) ? 'block' : 'none';
+
+        const importBox = document.getElementById('box-import-db');
+        if (importBox) importBox.style.display = (perms.backup || isMaster) ? 'block' : 'none';
+
+        // Initial Data Load
+        try {
+            renderAll();
+        } catch (e) {
+            console.error("Critical Render Error:", e);
+            showAlert("Dashboard render failed: " + e.message, "System Error", "error");
+        }
+    },
+
+    // Password Recovery
+    toggleForgotPassView(show) {
+        document.getElementById('login-view').style.display = show ? 'none' : 'block';
+        document.getElementById('forgot-view').style.display = show ? 'block' : 'none';
+        document.getElementById('signup-view').style.display = 'none';
+        document.getElementById('login-bottom-links').style.display = show ? 'none' : 'block';
+        document.getElementById('login-error').style.display = 'none';
+    },
+
+    toggleSignupView(show) {
+        document.getElementById('login-view').style.display = show ? 'none' : 'block';
+        document.getElementById('signup-view').style.display = show ? 'block' : 'none';
+        document.getElementById('forgot-view').style.display = 'none';
+        document.getElementById('login-bottom-links').style.display = show ? 'none' : 'block';
+        document.getElementById('login-error').style.display = 'none';
+    },
+
+    requestPasswordReset() {
+        const u = document.getElementById('recovery-user').value.trim();
+        // Fix: Removed duplicate check
+        if (!u) return showToast("Please enter your username", "error");
+
+        // Check if user exists (V2 logic)
+        const exists = state.users.find(usr => usr.user.toLowerCase() === u.toLowerCase()) ||
+            (u.toLowerCase() === this.master.user.toLowerCase());
+
+        if (!exists) return showToast("User not found!", "error");
+
+        // Check if already requested
+        if (state.passRequests.find(r => r.user.toLowerCase() === u.toLowerCase())) {
+            return showToast("Request already sent! Please wait for Master approval.", "warning");
+        }
+
+        state.passRequests = [...state.passRequests, { user: u, time: new Date().toLocaleString() }];
+        this.savePassReqs();
+        showToast("Request sent! Please ask the Master to approve your reset.", "info");
+        this.toggleForgotPassView(false);
+        document.getElementById('recovery-user').value = '';
+    },
+
+    grantReset(reqUser) {
+        const newPass = Math.floor(1000 + Math.random() * 9000).toString(); // 4 digit pin
+        const userIdx = state.users.findIndex(u => u.user === reqUser);
+
+        if (userIdx !== -1) {
+            state.users[userIdx].pass = newPass;
+            this.saveUsers();
+        } else if (reqUser.toLowerCase() === this.master.user.toLowerCase()) {
+            // Update LocalStorage for Master
+            localStorage.setItem('udt_master_pass_v2', newPass);
+            this.master.pass = newPass;
+        }
+
+        this.denyReset(reqUser, false); // Remove request
+        // Use Custom Alert for this sensitive info
+        showAlert(`Password for ${reqUser} has been reset to: ${newPass}`, "Password Reset Successful", "warning");
+        this.renderUserList();
+    },
+
+    denyReset(reqUser, confirmReq = true) {
+        if (confirmReq) {
+            showConfirm(`Deny password reset for ${reqUser}?`, () => {
+                state.passRequests = state.passRequests.filter(r => r.user !== reqUser);
+                this.savePassReqs();
+                this.renderUserList();
+                this.applyAuth();
+                showToast("Request Denied", "info");
+            });
+            return;
+        }
+        state.passRequests = state.passRequests.filter(r => r.user !== reqUser);
+        this.savePassReqs();
+        this.renderUserList();
+        this.applyAuth();
+    },
+
+    // Signup Request Handling
+    handleSignup(u, p) {
+        if (!u || !p) return showAlert("Please enter both username and password", "Error", "error");
+
+        // Check existing
+        if (state.users.find(usr => usr.user.toLowerCase() === u.toLowerCase()) ||
+            u.toLowerCase() === this.master.user.toLowerCase()) {
+            return showAlert("Username already exists!", "Signup Error", "error");
+        }
+
+        if (state.signupRequests.find(r => r.user.toLowerCase() === u.toLowerCase())) {
+            return showAlert("Request already pending approval!", "Signup Error", "warning");
+        }
+
+        state.signupRequests = [...state.signupRequests, {
+            user: u,
+            pass: p,
+            time: new Date().toLocaleString()
+        }];
+        this.saveSignupReqs();
+        this.saveSignupReqs();
+        showAlert("Signup request sent! Please wait for Master approval.", "Request Sent", "success");
+        this.toggleSignupView(false);
+    },
+
+    approveSignup(reqUser) {
+        const req = state.signupRequests.find(r => r.user === reqUser);
+        if (!req) return;
+
+        // Open Profile Modal instead of prompt for better UX
+        this.openUserProfile(req.user, req.pass, true);
+    },
+
+    openUserProfile(uName, pass = '', isNew = false) {
+        const user = state.users.find(u => u.user === uName);
+        const isSignup = !user && isNew;
+
+        document.getElementById('profile-title').innerText = isSignup ? `Approve User: ${uName}` : `Edit User: ${uName}`;
+        document.getElementById('prof-user').value = uName;
+        document.getElementById('prof-pass').value = user ? user.pass : pass;
+        document.getElementById('prof-role').value = user ? (user.role || 'Worker') : 'Worker';
+
+        // Permissions
+        const perms = (user && user.permissions) ? user.permissions : { add: true, edit: false, delete: false, reports: false, limits: false, backup: false };
+        document.getElementById('p-add').checked = !!perms.add;
+        document.getElementById('p-edit').checked = !!perms.edit;
+        document.getElementById('p-delete').checked = !!perms.delete;
+        document.getElementById('p-reports').checked = !!perms.reports;
+        document.getElementById('p-limits').checked = !!perms.limits;
+        document.getElementById('p-backup').checked = !!perms.backup;
+
+        document.getElementById('userProfileModal').style.display = 'flex';
+        // Close the main user modal if open to avoid overlap confusion
+        if (!isSignup) document.getElementById('userModal').style.display = 'none';
+    },
+
+    applyRoleDefaults() {
+        const role = document.getElementById('prof-role').value;
+        const defaults = {
+            'Owner': { add: true, edit: true, delete: true, reports: true, limits: true, backup: true },
+            'Worker': { add: true, edit: false, delete: false, reports: false, limits: false, backup: false },
+            'Guest': { add: false, edit: false, delete: false, reports: true, limits: false, backup: false }
+        };
+        const perms = defaults[role] || defaults['Guest'];
+        document.getElementById('p-add').checked = perms.add;
+        document.getElementById('p-edit').checked = perms.edit;
+        document.getElementById('p-delete').checked = perms.delete;
+        document.getElementById('p-reports').checked = perms.reports;
+        document.getElementById('p-limits').checked = perms.limits;
+        document.getElementById('p-backup').checked = perms.backup;
+    },
+
+    saveUserProfile() {
+        const u = document.getElementById('prof-user').value;
+        const p = document.getElementById('prof-pass').value;
+        const r = document.getElementById('prof-role').value;
+        const perms = {
+            add: document.getElementById('p-add').checked,
+            edit: document.getElementById('p-edit').checked,
+            delete: document.getElementById('p-delete').checked,
+            reports: document.getElementById('p-reports').checked,
+            limits: document.getElementById('p-limits').checked,
+            backup: document.getElementById('p-backup').checked
+        };
+
+        let user = state.users.find(usr => usr.user === u);
+        if (user) {
+            user.pass = p;
+            user.role = r;
+            user.permissions = perms;
+        } else {
+            // It was a signup approval
+            state.users = [...state.users, { user: u, pass: p, role: r, permissions: perms }];
+            state.signupRequests = state.signupRequests.filter(req => req.user !== u);
+            this.saveSignupReqs();
+        }
+
+        this.saveUsers();
+        this.renderUserList();
+        this.applyAuth();
+
+        // Close profile and return to management list
+        document.getElementById('userProfileModal').style.display = 'none';
+        openUserModal();
+
+        showToast(`Profile updated for ${u}`);
+    },
+
+    denySignup(reqUser, confirmReq = true) {
+        if (confirmReq) {
+            showConfirm(`Deny access for ${reqUser}?`, () => {
+                state.signupRequests = state.signupRequests.filter(r => r.user !== reqUser);
+                this.saveSignupReqs();
+                this.renderUserList();
+                this.applyAuth();
+                showToast("Signup Denied", "info");
+            });
+            return;
+        }
+        state.signupRequests = state.signupRequests.filter(r => r.user !== reqUser);
+        this.saveSignupReqs();
+        this.renderUserList();
+        this.applyAuth();
+    },
+
+    saveSignupReqs() {
+        state.save(DB_KEYS.SIGNUP_REQS, state.signupRequests);
+    },
+
+    savePassReqs() {
+        state.save(DB_KEYS.PASS_REQS, state.passRequests);
+    },
+
+    // User Management Methods
+    addUser() {
+        const u = document.getElementById('new-u-idx').value.trim();
+        const p = document.getElementById('new-u-pass').value.trim();
+        if (!u || !p) return showToast("Please enter both username and password", "error");
+
+        if (state.users.find(usr => usr.user.toLowerCase() === u.toLowerCase())) return showToast("User already exists!", "error");
+
+        state.users = [...state.users, { user: u, pass: p, role: 'Staff' }];
+        this.saveUsers();
+        this.renderUserList();
+        document.getElementById('new-u-idx').value = '';
+        document.getElementById('new-u-pass').value = '';
+    },
+
+    removeUser(uName) {
+        showConfirm(`Delete user ${uName}?`, () => {
+            state.users = state.users.filter(usr => usr.user !== uName);
+            this.saveUsers();
+            this.renderUserList();
+            showToast("User deleted", "warning");
+        }, "Delete User");
+    },
+
+    saveUsers() {
+        state.save(DB_KEYS.USERS, state.users);
+    },
+
+    renderUserList() {
+        const container = document.getElementById('user-list-container');
+        let html = '';
+
+        // Password Recovery Requests
+        if (state.passRequests.length > 0) {
+            html += `
+                <div style="background:rgba(239, 68, 68, 0.05); padding:10px; border-radius:12px; margin-bottom:15px; border:1px solid rgba(239, 68, 68, 0.1);">
+                    <h4 style="margin:0 0 10px 0; color:var(--danger); display:flex; align-items:center; gap:8px;">
+                        <i class="fas fa-key"></i> Reset Requests
+                    </h4>
+                    ${state.passRequests.map(req => `
+                        <div class="user-list-item" style="border-left:3px solid var(--danger); margin-bottom:8px;">
+                            <div style="flex:1;">
+                                <div style="font-weight:600;">${req.user}</div>
+                                <div style="font-size:0.75rem; color:#64748B;">${req.time}</div>
+                            </div>
+                            <div style="display:flex; gap:8px;">
+                                <button onclick="auth.grantReset('${req.user}')" class="btn-submit" 
+                                    style="width:auto; padding:4px 10px; background:var(--primary); font-size:0.75rem;">Grant</button>
+                                <button onclick="auth.denyReset('${req.user}')" 
+                                    style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Signup Requests
+        if (state.signupRequests.length > 0) {
+            html += `
+                <div style="background:rgba(236, 72, 153, 0.05); padding:10px; border-radius:12px; margin-bottom:15px; border:1px solid rgba(236, 72, 153, 0.1);">
+                    <h4 style="margin:0 0 10px 0; color:var(--primary); display:flex; align-items:center; gap:8px;">
+                        <i class="fas fa-user-plus"></i> Signup Requests
+                    </h4>
+                    ${state.signupRequests.map(req => `
+                        <div class="user-list-item" style="border-left:3px solid var(--primary); margin-bottom:8px;">
+                            <div style="flex:1;">
+                                <div style="font-weight:600;">${req.user}</div>
+                                <div style="font-size:0.75rem; color:#64748B;">Pass: <span style="background:#eee; padding:2px 4px; border-radius:4px;">${req.pass}</span></div>
+                            </div>
+                            <div style="display:flex; gap:8px;">
+                                <button onclick="auth.approveSignup('${req.user}')" class="btn-submit" 
+                                    style="width:auto; padding:4px 10px; background:var(--primary); font-size:0.75rem;">Approve</button>
+                                <button onclick="auth.denySignup('${req.user}')" 
+                                    style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        html += state.users.map(usr => `
+            <div class="user-list-item" onclick="auth.openUserProfile('${usr.user}')" style="cursor:pointer;">
+                <div style="flex:1;">
+                    <div style="font-weight:600;">${usr.user} <span style="font-weight:normal; font-size:0.8rem; color:var(--primary);">(${usr.role || 'Worker'})</span></div>
+                    <div style="font-size:0.75rem; color:#64748B;">Password: <span style="font-family:monospace; background:#f1f5f9; padding:2px 6px; border-radius:4px;">${usr.pass}</span></div>
+                </div>
+                <button onclick="event.stopPropagation(); auth.removeUser('${usr.user}')" style="background:#fee; color:red; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `).join('');
+
+        if (state.users.length === 0 && state.passRequests.length === 0 && state.signupRequests.length === 0) {
+            html = '<div style="color:#cbd5e1; text-align:center; padding:10px;">No users or requests.</div>';
+        }
+
+        container.innerHTML = html;
+    }
+};
+

@@ -1,0 +1,1021 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uthaya Hollow Blocks</title>
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- LOGIN OVERLAY -->
+    <div id="login-overlay" class="login-overlay">
+        <div class="login-box">
+            <div class="brand" style="justify-content:center; margin-bottom:20px;">
+                <i class="fas fa-cubes"></i> UHB
+            </div>
+            <div id="login-view">
+                <h3 style="margin-top:0; color:#64748B;">Sign In</h3>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <input type="text" id="login-user" placeholder="Username" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom:10px;">
+                        <div class="password-container">
+                            <input type="password" id="login-pass" placeholder="Password" required>
+                            <i class="fas fa-eye toggle-password" id="toggle-login-pass"
+                                onclick="auth.togglePasswordVisibility('login-pass', 'toggle-login-pass')"></i>
+                        </div>
+                    </div>
+                    <div style="text-align:right; margin-bottom:20px;">
+                        <a href="#" onclick="auth.toggleForgotPassView(true)"
+                            style="color:var(--primary); font-size:0.85rem; text-decoration:none; font-weight:600;">Forgot
+                            Password?</a>
+                    </div>
+                    <button type="submit" class="btn-submit">Login</button>
+                    <div id="login-error" style="color:var(--danger); margin-top:10px; font-weight:600; display:none;">
+                        Invalid Credentials
+                    </div>
+                </form>
+            </div>
+
+            <!-- Password Recovery View -->
+            <div id="forgot-view" style="display:none;">
+                <h3 style="margin-top:0; color:#64748B;">Password Recovery</h3>
+                <p style="font-size:0.9rem; color:#94A3B8; margin-bottom:20px;">Enter your username to request a reset
+                    from the Master.</p>
+                <div class="form-group">
+                    <input type="text" id="recovery-user" placeholder="Your Username">
+                </div>
+                <button onclick="auth.requestPasswordReset()" class="btn-submit"
+                    style="background:var(--secondary);">Send Request</button>
+                <div style="margin-top:15px;">
+                    <a href="#" onclick="auth.toggleForgotPassView(false)"
+                        style="color:#64748B; font-size:0.85rem; text-decoration:none;">Back to Login</a>
+                </div>
+            </div>
+
+            <!-- Signup View -->
+            <div id="signup-view" style="display:none;">
+                <h3 style="margin-top:0; color:#64748B;">Request Access</h3>
+                <p style="font-size:0.9rem; color:#94A3B8; margin-bottom:20px;">Submit your details. The Master will
+                    approve your access shortly.</p>
+                <form id="signupForm">
+                    <div class="form-group">
+                        <input type="text" id="signup-user" placeholder="Desired Username" required>
+                    </div>
+                    <div class="form-group">
+                        <div class="password-container">
+                            <input type="password" id="signup-pass" placeholder="Proposed Password" required>
+                            <i class="fas fa-eye toggle-password" id="toggle-signup-pass"
+                                onclick="auth.togglePasswordVisibility('signup-pass', 'toggle-signup-pass')"></i>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit">Submit Request</button>
+                </form>
+                <div style="margin-top:15px;">
+                    <a href="#" onclick="auth.toggleSignupView(false)"
+                        style="color:#64748B; font-size:0.85rem; text-decoration:none;">Back to Login</a>
+                </div>
+            </div>
+
+            <!-- Login Bottom Links -->
+            <div id="login-bottom-links" style="margin-top:20px; border-top:1px solid #eee; padding-top:20px;">
+                <p style="font-size:0.9rem; color:#64748B;">New user? <a href="#" onclick="auth.toggleSignupView(true)"
+                        style="color:var(--primary); font-weight:600; text-decoration:none;">Create Request</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <div class="sidebar" id="main-sidebar">
+        <div class="brand">
+            <i class="fas fa-cubes"></i> <span>UHB</span>
+        </div>
+
+        <div class="nav-item active" onclick="nav('dashboard')">
+            <i class="fas fa-chart-pie"></i> <span>Dashboard</span>
+        </div>
+        <div class="nav-item" onclick="nav('sales')">
+            <i class="fas fa-exchange-alt"></i> <span>Transactions</span>
+        </div>
+        <div class="nav-item" onclick="nav('inventory')" id="nav-inventory-btn">
+            <i class="fas fa-warehouse"></i> <span>Inventory</span>
+            <div id="inv-alert-dot" class="nav-alert-dot"></div>
+        </div>
+        <div class="nav-item" onclick="nav('customers')">
+            <i class="fas fa-users"></i> <span>Customers</span>
+        </div>
+        <div class="nav-item" onclick="nav('reports')">
+            <i class="fas fa-file-invoice-dollar"></i> <span>Reports</span>
+        </div>
+        <div class="nav-item" onclick="nav('settings')">
+            <i class="fas fa-cog"></i> <span>Settings</span>
+        </div>
+
+        <!-- Master Only: User Management -->
+        <div class="nav-item" onclick="openUserModal()" id="btn-user-mgmt"
+            style="display:none; color:var(--secondary);">
+            <i class="fas fa-user-shield"></i> <span>Users</span>
+            <div id="btn-user-mgmt-badge" class="nav-alert-dot"
+                style="top:10px; left:48px; background:var(--primary); box-shadow:0 0 10px rgba(236, 72, 153, 0.5);">
+            </div>
+        </div>
+
+        <div class="user-profile">
+            <div id="user-avatar"
+                style="width:40px; height:40px; min-width:40px; background:var(--primary); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">
+                U</div>
+            <div class="user-info" style="flex:1; margin-left:10px; overflow:hidden;">
+                <div id="user-name" style="font-weight:700;">User</div>
+                <div id="user-role" style="font-size:0.75rem; opacity:0.7;">Staff</div>
+            </div>
+            <button onclick="auth.logout()" title="Sign Out" class="sign-out-btn">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <div class="page-title" id="page-title" style="flex:1;">Dashboard Overview</div>
+
+            <!-- Global Controls (Visible on Dashboard, Sales, Inventory) -->
+            <div id="global-controls" style="display:flex; gap:10px; align-items:center;">
+                <div id="dash-date-filter">
+                    <select id="date-filter" onchange="renderDashboard()"
+                        style="padding:8px; border-radius:8px; border:1px solid #cbd5e1; cursor:pointer;">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly" selected>Monthly</option>
+                        <option value="6months">6 Months</option>
+                        <option value="1year">1 Year</option>
+                    </select>
+                </div>
+                <button class="header-tool-btn" id="header-cal-btn" onclick="tools.openCalendar()" title="Open Calendar"
+                    style="display:none; background:none; border:none; cursor:pointer;">
+                    <i class="fas fa-calendar-alt" style="font-size:1.4rem; color:var(--dark);"></i>
+                </button>
+            </div>
+            <option value="3years">3 Years</option>
+            </select>
+        </div>
+
+        <div class="mode-toggle-group"
+            style="background:#f1f5f9; padding:4px; border-radius:10px; display:flex; gap:4px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+            <button onclick="setDashMode('sales')" id="btn-mode-sales" class="mode-toggle-btn active"
+                style="border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:700; font-size:0.85rem; transition: all 0.2s ease;">
+                <i class="fas fa-shopping-cart" style="margin-right:6px;"></i>Sales
+            </button>
+            <button onclick="setDashMode('buy')" id="btn-mode-buy" class="mode-toggle-btn"
+                style="border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:700; font-size:0.85rem; transition: all 0.2s ease; background:transparent; color:#64748B;">
+                <i class="fas fa-truck" style="margin-right:6px;"></i>Purchase
+            </button>
+        </div>
+    </div>
+
+    </div>
+
+    <div class="scroll-area">
+        <!-- DASHBOARD VIEW -->
+        <div id="view-dashboard">
+            <div class="stats-grid">
+                <div class="card stat-card">
+                    <div class="stat-label" id="val-total-label">Total Transactions</div>
+                    <div class="stat-value" id="val-total">0</div>
+                    <div class="trend-up"><i class="fas fa-chart-line" id="val-total-icon"></i> All Time</div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-label">Stock Value (Est)</div>
+                    <div class="stat-value" id="val-stock-est">&#8377;0</div>
+                    <div class="trend-up" style="color:var(--primary);"><i class="fas fa-coins" id="val-stock-icon"></i>
+                        Calculate</div>
+                </div>
+            </div>
+
+            <div class="stats-grid" style="grid-template-columns: 2fr 1fr;">
+                <div class="card">
+                    <h3 style="margin:0 0 20px 0;">30 Days Activity</h3>
+                    <div class="chart-container"><canvas id="mainChart"></canvas></div>
+                </div>
+                <div class="card">
+                    <h3 style="margin:0 0 20px 0;">Top Products</h3>
+                    <div class="chart-container"><canvas id="pieChart"></canvas></div>
+                </div>
+            </div>
+
+            <div id="reminders-card" class="card"
+                style="display:none; margin-bottom:30px; border-left:4px solid var(--accent); background:rgba(245, 158, 11, 0.05);">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h4
+                        style="margin:0; color:var(--accent); font-size:0.9rem; text-transform:uppercase; letter-spacing:1px;">
+                        <i class="fas fa-bell"></i> Settlement Reminders (Due Today)
+                    </h4>
+                    <span id="reminder-count"
+                        style="background:var(--accent); color:white; padding:2px 8px; border-radius:12px; font-size:0.7rem; font-weight:700;">0</span>
+                </div>
+                <div id="reminder-list" style="margin-top:15px; display:flex; flex-wrap:wrap; gap:10px;">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <h3 style="margin: 30px 0 20px 0;">Recent Transactions</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Name</th>
+                            <th>Number</th>
+                            <th>Product</th>
+                            <th>Qty</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SALES VIEW -->
+        <div id="view-sales" style="display:none;">
+            <div
+                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; gap:15px; flex-wrap:wrap;">
+                <h2 style="margin:0;">Transaction Log</h2>
+                <div style="display:flex; gap:10px; flex:1; justify-content:flex-end; align-items:center;">
+                    <!-- Advanced Column Filtering Integrated into Table Headers -->
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="full-table">
+                    <thead>
+                        <tr>
+                            <th style="min-width:120px;">
+                                Date
+                                <input type="date" id="f-date" oninput="renderSalesTable()"
+                                    style="display:block; width:100%; font-size:0.7rem; padding:2px; margin-top:5px; color:black;">
+                            </th>
+                            <th>
+                                Customer/Dealer
+                                <input type="text" id="f-name" placeholder="Filter..." oninput="renderSalesTable()"
+                                    style="display:block; width:100%; font-size:0.7rem; padding:2px; margin-top:5px; color:black;">
+                            </th>
+                            <th>
+                                Product
+                                <select id="f-prod" onchange="renderSalesTable()"
+                                    style="display:block; width:100%; font-size:0.7rem; padding:2px; margin-top:5px; color:black;">
+                                    <option value="all">All</option>
+                                </select>
+                            </th>
+                            <th>
+                                Size
+                                <input type="text" id="f-size" placeholder="Filter..." oninput="renderSalesTable()"
+                                    style="display:block; width:100%; font-size:0.7rem; padding:2px; margin-top:5px; color:black;">
+                            </th>
+                            <th>Qty</th>
+                            <th>Amount</th>
+                            <th>
+                                Status
+                                <select id="f-status" onchange="renderSalesTable()"
+                                    style="display:block; width:100%; font-size:0.7rem; padding:2px; margin-top:5px; color:black;">
+                                    <option value="all">All</option>
+                                    <option value="purchased">Purchased</option>
+                                    <option value="booked">Booked</option>
+                                    <option value="returned">Returned</option>
+                                </select>
+                            </th>
+                            <th style="text-align:right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sales-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- INVENTORY VIEW -->
+        <div id="view-inventory" style="display:none;">
+            <h2 style="margin-top:0;">Current Stock Levels</h2>
+            <div id="inventory-grid" class="inventory-grid"></div>
+        </div>
+
+        <!-- CUSTOMERS VIEW -->
+        <div id="view-customers" style="display:none;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h2 style="margin:0;">Customer Database</h2>
+                <button class="action-btn" onclick="openCustModal()" style="padding:8px 16px; font-size:0.9rem;">
+                    <i class="fas fa-user-plus"></i> Add Customer
+                </button>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Phone/Contact</th>
+                            <th>Type</th>
+                            <th style="text-align:right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customer-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- REPORTS VIEW -->
+        <div id="view-reports" style="display:none;">
+            <h2 style="margin-top:0; margin-bottom:10px;">Data Intelligence & Reports</h2>
+            <p style="color:#64748B; margin-bottom:30px; font-size:1rem;">Generate and export comprehensive datasets
+                for analysis or accounting.</p>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:25px;">
+                <!-- Sales Report Card -->
+                <div class="card detail-card" onclick="generateReport('sales')"
+                    style="border-top:4px solid var(--primary); cursor:pointer; padding:30px;">
+                    <div style="display:flex; align-items:center; gap:20px; margin-bottom:15px;">
+                        <div
+                            style="width:50px; height:50px; background:rgba(245, 158, 11, 0.1); border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--primary); font-size:1.5rem;">
+                            <i class="fas fa-file-invoice"></i>
+                        </div>
+                        <h3 style="margin:0;">Sales Record Export</h3>
+                    </div>
+                    <p style="color:#64748B; font-size:0.9rem; line-height:1.5; margin-bottom:20px;">
+                        Download a detailed log of all sales transactions including customer names, products, and
+                        settlement status.
+                    </p>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:0.8rem; font-weight:700; color:var(--primary);">CSV / EXCEL
+                            FORMAT</span>
+                        <i class="fas fa-download" style="color:#cbd5e1;"></i>
+                    </div>
+                </div>
+
+                <!-- Stock Report Card -->
+                <div class="card detail-card" onclick="generateReport('stock')"
+                    style="border-top:4px solid var(--secondary); cursor:pointer; padding:30px;">
+                    <div style="display:flex; align-items:center; gap:20px; margin-bottom:15px;">
+                        <div
+                            style="width:50px; height:50px; background:rgba(59, 130, 246, 0.1); border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--secondary); font-size:1.5rem;">
+                            <i class="fas fa-boxes"></i>
+                        </div>
+                        <h3 style="margin:0;">Inventory Valuation</h3>
+                    </div>
+                    <p style="color:#64748B; font-size:0.9rem; line-height:1.5; margin-bottom:20px;">
+                        Export current stock balances across all product categories with their respective sizes and
+                        prices.
+                    </p>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:0.8rem; font-weight:700; color:var(--secondary);">CURRENT
+                            SNAPSHOT</span>
+                        <i class="fas fa-download" style="color:#cbd5e1;"></i>
+                    </div>
+                </div>
+
+                <!-- Customer List Card -->
+                <div class="card detail-card" onclick="generateReport('customers')"
+                    style="border-top:4px solid #10b981; cursor:pointer; padding:30px;">
+                    <div style="display:flex; align-items:center; gap:20px; margin-bottom:15px;">
+                        <div
+                            style="width:50px; height:50px; background:rgba(16, 185, 129, 0.1); border-radius:12px; display:flex; align-items:center; justify-content:center; color:#10b981; font-size:1.5rem;">
+                            <i class="fas fa-address-book"></i>
+                        </div>
+                        <h3 style="margin:0;">Customer Directory</h3>
+                    </div>
+                    <p style="color:#64748B; font-size:0.9rem; line-height:1.5; margin-bottom:20px;">
+                        Generate a full list of all customers and dealers with their contact information and
+                        categorized types.
+                    </p>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:0.8rem; font-weight:700; color:#10b981;">CONTACT DATABASE</span>
+                        <i class="fas fa-download" style="color:#cbd5e1;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SETTINGS VIEW -->
+        <div id="view-settings" style="display:none;">
+            <h2>Application Settings</h2>
+
+            <div class="stats-grid">
+                <!-- Backup & Restore -->
+                <div class="card">
+                    <h3 style="margin-top:0;"><i class="fas fa-database" style="color:var(--primary);"></i> Data
+                        Management</h3>
+                    <p style="color:#64748B; font-size:0.9rem;">Backup your entire database to a file or restore
+                        from a previous backup.</p>
+                    <div style="display:grid; gap:12px; margin-top:20px;">
+                        <button id="btn-export-db" class="btn-submit" onclick="exportDB()"
+                            style="background:var(--dark);">
+                            <i class="fas fa-download"></i> Export Full Backup (.json)
+                        </button>
+                        <div style="position:relative;" id="box-import-db">
+                            <input type="file" id="import-file" style="display:none;" onchange="importDB(this)">
+                            <button class="btn-submit" onclick="document.getElementById('import-file').click()"
+                                style="background:var(--secondary);">
+                                <i class="fas fa-upload"></i> Restore from Backup
+                            </button>
+                        </div>
+                        <button id="btn-reset-db" class="btn-submit" onclick="resetDB()"
+                            style="display:none; background:none; border:1px solid var(--danger); color:var(--danger); margin-top:10px;">
+                            <i class="fas fa-trash-alt"></i> Wipe All Data (Master Only)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Catalog Management -->
+                <div class="card">
+                    <h3 style="margin-top:0;"><i class="fas fa-list-ul" style="color:var(--accent);"></i> Catalog
+                        Management</h3>
+                    <p style="color:#64748B; font-size:0.9rem;">Manage products and sizes available in the system.
+                    </p>
+                    <button class="btn-submit" onclick="openCatalogModal()"
+                        style="background:var(--primary); margin-top:20px;">
+                        <i class="fas fa-edit"></i> Manage Products/Sizes
+                    </button>
+                </div>
+
+                <!-- Tools Section -->
+                <div class="card">
+                    <h3 style="margin-top:0;"><i class="fas fa-toolbox" style="color:#8b5cf6;"></i> Tools</h3>
+                    <div style="display:flex; flex-direction:column; gap:15px; margin-top:20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <div style="font-weight:600;">Calculator</div>
+                                <div style="font-size:0.8rem; color:#64748B;">Overlay scientific calculator</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="tool-calc-toggle" onchange="tools.toggleCalculator()">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <div style="font-weight:600;">Calendar Notifications</div>
+                                <div style="font-size:0.8rem; color:#64748B;">Daily task reminders on dashboard
+                                </div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="tool-cal-toggle" onchange="tools.toggleCalendarNotifs()">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Master Security -->
+            <div class="card" id="master-settings-card" style="display:none; margin-top:20px;">
+                <h3 style="margin-top:0;"><i class="fas fa-shield-alt" style="color:var(--danger);"></i> Security
+                    Settings</h3>
+                <div style="margin-top:20px;">
+                    <label>Change Master Password</label>
+                    <div style="display:flex; gap:10px; align-items:stretch;">
+                        <div class="password-container" style="flex:1;">
+                            <input type="password" id="new-master-pass" placeholder="Enter new password"
+                                style="margin-bottom:0;">
+                            <i class="fas fa-eye toggle-password" id="toggle-master-pass"
+                                onclick="auth.togglePasswordVisibility('new-master-pass', 'toggle-master-pass')"></i>
+                        </div>
+                        <button onclick="changeMasterPass()" class="btn-submit"
+                            style="width:auto; background:var(--danger); margin-top:0;">Update</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    </div>
+
+    <!-- STOCK LEDGER MODAL -->
+    <div id="ledgerModal" class="modal">
+        <div class="modal-content" style="max-width:800px; width:95%;">
+            <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:20px;">
+                <div>
+                    <h2 style="margin:0;" id="ledger-title-prod">Product Name</h2>
+                    <div id="ledger-title-size" style="color:#64748B; font-size:1.1rem; font-weight:600;">Size</div>
+                </div>
+                <button onclick="closeModal('ledgerModal')"
+                    style="background:none; border:none; font-size:1.5rem;">&times;</button>
+            </div>
+
+            <div class="table-wrapper" style="max-height:500px; overflow-y:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Entry Type</th>
+                            <th>Customer/Dealer</th>
+                            <th>Qty</th>
+                            <th>Total Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ledger-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW TRANSACTION MODAL -->
+    <div id="txModal" class="modal">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h2 style="margin:0;" id="tx-title">New Transaction</h2>
+                <button onclick="closeModal('txModal')"
+                    style="background:none; border:none; font-size:1.5rem;">&times;</button>
+            </div>
+            <form id="txForm">
+                <input type="hidden" id="t-type" name="type" value="sell">
+
+                <div class="form-top-layer">
+                    <div class="form-group" style="flex:1;">
+                        <label>Date</label>
+                        <input type="date" id="t-date" required>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label>Customer *</label>
+                        <input type="text" id="t-customer" list="traderList" placeholder="Select or type customer..."
+                            required oninput="checkNewCustomer(this.value)">
+                        <datalist id="traderList"></datalist>
+                    </div>
+                </div>
+
+                <div id="new-cust-phone-box"
+                    style="display:none; transition: 0.3s; background: #fff5f7; padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px dashed var(--primary);">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label style="color:var(--primary); font-size:0.8rem; font-weight:700;">
+                            <i class="fas fa-exclamation-triangle"></i> NEW CUSTOMER: Contact Number Required *
+                        </label>
+                        <input type="text" id="t-phone" placeholder="Enter mobile number (10 digits)">
+                    </div>
+                </div>
+
+                <div class="form-top-layer">
+                    <div class="form-group" style="flex:1;">
+                        <label>Product</label>
+                        <select id="t-product" onchange="updateSizeDropdown()"></select>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label>Size</label>
+                        <select id="t-size"></select>
+                    </div>
+                    <div class="form-group" style="width:120px;">
+                        <label>Qty (Units)</label>
+                        <input type="number" id="t-qty" required min="1" value="1">
+                    </div>
+                </div>
+
+                <div class="form-top-layer">
+                    <div class="form-group" style="flex:1;">
+                        <label>Status</label>
+                        <select id="t-status" onchange="toggleSettlementFields()">
+                            <option value="purchased">Purchased (Full Settlement)</option>
+                            <option value="booked">Booked (Partial/No Payment)</option>
+                            <option value="returned">Returned</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label>Payment Method</label>
+                        <select id="t-payment" onchange="toggleUPIField()">
+                            <option value="Cash">Cash</option>
+                            <option value="UPI">UPI / PhonePe</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="upi-id-box" class="form-group"
+                    style="display:none; transition: 0.3s; background: #f0f9ff; padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px dashed #0ea5e9;">
+                    <label style="color:#0369a1; font-size:0.8rem; font-weight:700;">
+                        <i class="fas fa-fingerprint"></i> UPI Transaction ID
+                    </label>
+                    <input type="text" id="t-upi-id" placeholder="Enter UPI Ref # / Transaction ID">
+                </div>
+
+                <div class="form-top-layer">
+                    <div class="form-group" style="flex:1;">
+                        <label>Total Amount (â‚¹)</label>
+                        <input type="number" id="t-amount" placeholder="0.00" oninput="autoFillPaid()" min="0">
+                    </div>
+                    <div id="paid-amount-box" class="form-group" style="flex:1; display:none;">
+                        <label>Paid Now (Advance/Token)</label>
+                        <input type="number" id="t-paid" placeholder="0.00" min="0">
+                    </div>
+                    <div id="promise-date-box" class="form-group" style="flex:1; display:none;">
+                        <label>Promise Settlement Date</label>
+                        <input type="date" id="t-promise">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">Save Record</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- NEW CUSTOMER MODAL -->
+    <div id="custModal" class="modal">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h2 style="margin:0;">Add Customer</h2>
+                <button onclick="closeModal('custModal')"
+                    style="background:none; border:none; font-size:1.5rem;">&times;</button>
+            </div>
+            <form id="custForm">
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input type="text" id="c-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone / Contact</label>
+                    <input type="text" id="c-contact">
+                </div>
+                <div class="form-group">
+                    <label>Registration Type</label>
+                    <select id="c-type">
+                        <option value="Customer">Customer (Buyer)</option>
+                        <option value="Dealer">Dealer (Supplier)</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-submit" style="background:var(--accent);">Save Customer</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- USER MANAGEMENT MODAL (Master Only) -->
+    <div id="user-management-modal" class="modal">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h2 style="margin:0;">User Management</h2>
+                <button onclick="closeModal('user-management-modal')"
+                    style="background:none; border:none; font-size:1.5rem;">&times;</button>
+            </div>
+
+            <h4 style="margin:0 0 10px 0;">Add New User</h4>
+            <!-- Form Row Container for Alignment -->
+            <div class="form-row" style="display: flex; align-items: flex-end; gap: 10px; margin-bottom: 20px;">
+                <div style="flex:1;">
+                    <input type="text" id="new-user-name" placeholder="Username" style="margin-bottom:0;">
+                </div>
+                <div style="flex:1;">
+                    <input type="text" id="new-user-pass" placeholder="Password" style="margin-bottom:0;">
+                </div>
+                <!-- Aligned Button -->
+                <button onclick="auth.addNewUser()" class="btn-submit"
+                    style="width:auto; margin-top:0; padding:13px 18px; background:var(--secondary);">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+
+            <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
+
+            <div id="user-list-container" style="max-height:300px; overflow-y:auto;">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOMER PORAL / STATEMENT MODAL -->
+    <div id="custPortalModal" class="modal">
+        <div class="modal-content" style="max-width:800px; width:95%;">
+            <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:20px;">
+                <div>
+                    <h2 style="margin:0;" id="portal-cust-name">Customer Name</h2>
+                    <div id="portal-cust-contact" style="color:#64748B; font-size:0.9rem;">+91 00000 00000</div>
+                </div>
+                <button onclick="closeModal('custPortalModal')"
+                    style="background:none; border:none; font-size:1.5rem;">&times;</button>
+            </div>
+
+            <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom:20px;">
+                <div class="card" style="padding:15px; border-left:4px solid var(--secondary);">
+                    <div style="font-size:0.8rem; color:#64748B;">Total Orders</div>
+                    <div id="portal-total-orders" style="font-weight:700; font-size:1.2rem;">0</div>
+                </div>
+                <div class="card" style="padding:15px; border-left:4px solid #10b981;">
+                    <div style="font-size:0.8rem; color:#64748B;">Total Stock In</div>
+                    <div id="portal-stock-in" style="font-weight:700; font-size:1.2rem;">0</div>
+                </div>
+                <div class="card" style="padding:15px; border-left:4px solid var(--primary);">
+                    <div style="font-size:0.8rem; color:#64748B;">Current Balance</div>
+                    <div id="portal-balance" style="font-weight:700; font-size:1.2rem;">&#8377;0</div>
+                </div>
+            </div>
+
+            <h3 style="margin-bottom:10px; font-size:1rem;">Transaction History (Day-wise)</h3>
+            <div class="table-wrapper" style="max-height:400px; overflow-y:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Product</th>
+                            <th>Status</th>
+                            <th>Type</th>
+                            <th>Qty</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="portal-history-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- USER MANAGEMENT MODAL (Master Only) -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h2 style="margin:0;">User Management</h2>
+                <button onclick="closeModal('userModal')"
+                    style="background:none; border:none; font-size:1.5rem;">&times;</button>
+            </div>
+            <div style="border-bottom:1px solid #E2E8F0; padding-bottom:15px; margin-bottom:15px;">
+                <h4 style="margin:0 0 10px 0;">Add New User</h4>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="new-u-idx" placeholder="Username" style="flex:1;">
+                    <input type="text" id="new-u-pass" placeholder="Password" style="flex:1;">
+                    <button onclick="auth.addUser()" class="btn-submit"
+                        style="width:auto; background:var(--secondary);"><i class="fas fa-plus"></i></button>
+                </div>
+            </div>
+            <div id="user-list-container">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOM ALERT MODAL -->
+    <div id="customAlertModal" class="modal" style="z-index: 10001;">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div style="margin-bottom: 15px; font-size: 3rem; color: var(--primary);" id="alert-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <h3 id="alert-title" style="margin: 0 0 10px 0;">Alert</h3>
+            <p id="alert-msg" style="color: #64748B; margin-bottom: 25px;"></p>
+            <button onclick="closeCustomAlert()" class="btn-submit" style="width: auto; padding: 10px 30px;">OK</button>
+        </div>
+    </div>
+
+    <!-- CUSTOM CONFIRM MODAL -->
+    <div id="customConfirmModal" class="modal" style="z-index: 10002;">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div style="margin-bottom: 15px; font-size: 3rem; color: var(--danger);">
+                <i class="fas fa-question-circle"></i>
+            </div>
+            <h3 id="confirm-title" style="margin: 0 0 10px 0;">Confirm Action</h3>
+            <p id="confirm-msg" style="color: #64748B; margin-bottom: 25px;">Are you sure?</p>
+            <div id="confirm-input-container" style="display:none; margin-bottom: 20px;">
+                <input type="text" id="confirm-input"
+                    style="width: 100%; border: 1px solid #cbd5e1; padding: 10px; border-radius: 8px;">
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button id="btn-confirm-cancel" class="btn-submit"
+                    style="background: #e2e8f0; color: #475569; width: auto; padding: 10px 20px;">Cancel</button>
+                <button id="btn-confirm-ok" class="btn-submit"
+                    style="background: var(--danger); width: auto; padding: 10px 20px;">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- CATALOG MANAGEMENT MODAL -->
+    <div id="catalogModal" class="modal">
+        <div class="modal-content" style="max-width:600px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h2 style="margin:0;">Manage Catalog</h2>
+                <div
+                    style="background:#f1f5f9; padding:3px; border-radius:8px; display:flex; gap:3px; border:1px solid #e2e8f0;">
+                    <button id="mgr-cat-sales" onclick="catalog.setMgrMode('sales')"
+                        style="border:none; padding:4px 12px; border-radius:6px; font-size:0.75rem; font-weight:700; cursor:pointer; background:white; box-shadow:0 1px 3px rgba(0,0,0,0.1); color:#ec4899;">Sales</button>
+                    <button id="mgr-cat-buy" onclick="catalog.setMgrMode('buy')"
+                        style="border:none; padding:4px 12px; border-radius:6px; font-size:0.75rem; font-weight:700; cursor:pointer; background:transparent; color:#64748B;">Purchase</button>
+                </div>
+                <button onclick="closeModal('catalogModal')"
+                    style="background:none; border:none; font-size:1.5rem; line-height:1;">&times;</button>
+            </div>
+
+            <div style="background:#f8fafc; padding:15px; border-radius:12px; margin-bottom:20px;">
+                <h4 style="margin:0 0 10px 0;">Add to Catalog</h4>
+                <div style="display:flex; gap:10px; align-items:flex-start;">
+                    <div style="flex:1;">
+                        <input type="text" id="new-prod-name" placeholder="Product Name (e.g. Brick)"
+                            style="margin-bottom:0;">
+                    </div>
+                    <div style="flex:1;">
+                        <input type="text" id="new-prod-size" placeholder="Size (e.g. 6 inch)" style="margin-bottom:0;">
+                    </div>
+                    <div style="flex:1;">
+                        <input type="number" id="new-prod-price" placeholder="Price per piece (&#8377;)"
+                            style="margin-bottom:0;">
+                    </div>
+                    <button onclick="catalog.addProduct()" class="btn-submit"
+                        style="width:auto; background:var(--primary); padding:12px 16px; margin-top:0; height:100%;"><i
+                            class="fas fa-plus"></i></button>
+                </div>
+            </div>
+
+            <div id="catalog-list" style="max-height:400px; overflow-y:auto;">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- USER PROFILE & PERMISSIONS MODAL -->
+    <div id="userProfileModal" class="modal">
+        <div class="modal-content" style="max-width:500px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h2 style="margin:0;" id="profile-title">User Profile</h2>
+                <button onclick="closeModal('userProfileModal')"
+                    style="background:none; border:none; font-size:1.5rem;">&times;</button>
+            </div>
+            <div id="profile-body">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="prof-user" readonly style="background:#f8fafc;">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="password-container">
+                        <input type="password" id="prof-pass">
+                        <i class="fas fa-eye toggle-password" id="toggle-prof-pass"
+                            onclick="auth.togglePasswordVisibility('prof-pass', 'toggle-prof-pass')"></i>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Assigned Role</label>
+                    <select id="prof-role" onchange="auth.applyRoleDefaults()">
+                        <option value="Owner">Owner</option>
+                        <option value="Worker">Worker</option>
+                        <option value="Guest">Guest</option>
+                    </select>
+                </div>
+                <div style="margin-top:20px;">
+                    <h4 style="margin:0 0 15px 0; color:var(--primary);">Access Permissions</h4>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; cursor:pointer;">
+                            <input type="checkbox" id="p-add" style="width:18px; height:18px;"> <span>Add
+                                Transactions</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; cursor:pointer;">
+                            <input type="checkbox" id="p-edit" style="width:18px; height:18px;"> <span>Edit
+                                Transactions</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; cursor:pointer;">
+                            <input type="checkbox" id="p-delete" style="width:18px; height:18px;"> <span>Delete
+                                Transactions</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; cursor:pointer;">
+                            <input type="checkbox" id="p-reports" style="width:18px; height:18px;"> <span>View
+                                Reports</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; cursor:pointer;">
+                            <input type="checkbox" id="p-limits" style="width:18px; height:18px;"> <span>Stock
+                                Limits</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; cursor:pointer;">
+                            <input type="checkbox" id="p-backup" style="width:18px; height:18px;"> <span>Backup
+                                Data</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top:30px; text-align:right;">
+                <button class="btn-submit" style="width:auto; padding:10px 30px;" onclick="auth.saveUserProfile()">Save
+                    Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CALENDAR MODAL -->
+    <div id="calendar-modal" class="modal">
+        <div class="modal-content">
+            <div class="cal-header">
+                <button onclick="tools.prevMonth()" style="background:none; border:none; cursor:pointer;">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <h2 id="cal-month-year">Month Year</h2>
+                <button onclick="tools.nextMonth()" style="background:none; border:none; cursor:pointer;">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <button onclick="closeModal('calendar-modal')"
+                    style="background:none; border:none; font-size:1.5rem; margin-left:10px;">&times;</button>
+            </div>
+
+            <div class="cal-grid" id="cal-grid-header">
+                <div class="cal-day-name">Sun</div>
+                <div class="cal-day-name">Mon</div>
+                <div class="cal-day-name">Tue</div>
+                <div class="cal-day-name">Wed</div>
+                <div class="cal-day-name">Thu</div>
+                <div class="cal-day-name">Fri</div>
+                <div class="cal-day-name">Sat</div>
+            </div>
+            <div class="cal-grid" id="cal-days">
+                <!-- Days generated by JS -->
+            </div>
+            <div id="cal-event-detail" class="cal-event-detail"></div>
+        </div>
+    </div>
+
+    <!-- CALCULATOR WIDGET -->
+    <div id="calculator-widget">
+        <div id="calc-handle" title="Drag to move (Coming Soon)"></div>
+        <div class="calc-display">
+            <div class="calc-history" id="calc-history"></div>
+            <div class="calc-current" id="calc-current">0</div>
+        </div>
+        <div class="calc-keys">
+            <button class="calc-btn clear" onclick="calc.clear()">AC</button>
+            <button class="calc-btn" onclick="calc.undo()">&#9003;</button>
+            <button class="calc-btn op" onclick="calc.op('%')">%</button>
+            <button class="calc-btn op" onclick="calc.op('/')">&divide;</button>
+
+            <button class="calc-btn" onclick="calc.num(7)">7</button>
+            <button class="calc-btn" onclick="calc.num(8)">8</button>
+            <button class="calc-btn" onclick="calc.num(9)">9</button>
+            <button class="calc-btn op" onclick="calc.op('*')">&times;</button>
+
+            <button class="calc-btn" onclick="calc.num(4)">4</button>
+            <button class="calc-btn" onclick="calc.num(5)">5</button>
+            <button class="calc-btn" onclick="calc.num(6)">6</button>
+            <button class="calc-btn op" onclick="calc.op('-')">&minus;</button>
+
+            <button class="calc-btn" onclick="calc.num(1)">1</button>
+            <button class="calc-btn" onclick="calc.num(2)">2</button>
+            <button class="calc-btn" onclick="calc.num(3)">3</button>
+            <button class="calc-btn op" onclick="calc.op('+')">+</button>
+
+            <button class="calc-btn" onclick="calc.num(0)">0</button>
+            <button class="calc-btn" onclick="calc.num('.')">.</button>
+            <button class="calc-btn eq" onclick="calc.calculate()">=</button>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="js/state.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/catalog.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/tools.js"></script>
+    <script src="js/app.js"></script>
+    <!-- Floating Action Button -->
+    <button class="fab" id="fab-add" onclick="openModalWithMode()" title="Add New Entry">
+        <i class="fas fa-plus"></i>
+    </button>
+    <!-- RECEIPT TEMPLATE (Hidden) -->
+    <div id="receipt-print" style="display:none; padding:40px; background:white; font-family:sans-serif;">
+        <div style="text-align:center; margin-bottom:20px;">
+            <h1 style="margin:0; font-family:'Rajdhani'; color:var(--primary);">UHB</h1>
+            <div style="font-size:0.85rem; color:#64748B;">Uthaya Hollow Blocks & Allied Products</div>
+            <div style="font-size:0.75rem;">Contact: +91 91590 54341</div>
+        </div>
+        <hr style="border:0; border-top:1px dashed #ccc; margin:15px 0;">
+        <div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:10px;">
+            <div><b>Receipt #</b> <span id="r-id"></span></div>
+            <div><b>Date:</b> <span id="r-date"></span></div>
+        </div>
+        <div style="font-size:0.9rem; margin-bottom:20px;">
+            <b>Customer:</b> <span id="r-cust"></span><br>
+            <b>Contact:</b> <span id="r-contact"></span>
+        </div>
+        <table style="width:100%; font-size:0.9rem; border-collapse:collapse; margin-bottom:20px;">
+            <thead>
+                <tr style="border-bottom:1px solid #eee;">
+                    <th style="text-align:left; padding:8px 0;">Product</th>
+                    <th style="text-align:right; padding:8px 0;">Qty</th>
+                    <th style="text-align:right; padding:8px 0;">Amt</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td id="r-prod" style="padding:10px 0;"></td>
+                    <td id="r-qty" style="text-align:right;"></td>
+                    <td id="r-amt" style="text-align:right; font-weight:700;"></td>
+                </tr>
+            </tbody>
+        </table>
+        <div style="text-align:right; margin-bottom:30px;">
+            <div id="r-payment-info" style="font-size:0.75rem; color:#64748B; margin-bottom:5px;"></div>
+            <div style="font-size:1.1rem; font-weight:700;">Total Amount: â‚¹<span id="r-total"></span></div>
+            <div id="r-settlement-info" style="margin-top:10px; font-size:0.9rem;"></div>
+        </div>
+        <div style="text-align:center; font-size:0.75rem; color:#94A3B8; margin-top:40px;">
+            Thank you for your business!<br>This is a computer generated receipt.
+        </div>
+    </div>
+</body>
+
+</html>
